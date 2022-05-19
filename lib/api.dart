@@ -1,5 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:latlong2/latlong.dart';
 
 class Response {
   double? version;
@@ -70,7 +71,9 @@ class Elements {
     id = json['id'];
     bounds =
         json['bounds'] != null ? new Bounds.fromJson(json['bounds']) : null;
-    nodes = json['nodes'].cast<int>();
+    if (json['nodes'] != null) {
+      nodes = json['nodes'].cast<int>();
+    }
     if (json['geometry'] != null) {
       geometry = <Geometry>[];
       json['geometry'].forEach((v) {
@@ -235,9 +238,8 @@ class Tags {
   }
 }
 
-Future<Elements> fetchElements(coords) async {
-  final coordStr =
-      coords.latitude.toString() + ',' + coords.longitude.toString();
+Future<Elements> fetchElements(coordsLat, coordsLong) async {
+  final coordStr = coordsLat.toString() + ',' + coordsLong.toString();
   final response = await http.get(Uri.parse(
       'https://overpass-api.de/api/interpreter?data=[out:json];(node["railway"="rail"](around:5,$coordStr);way["railway"="rail"](around:5,$coordStr);node["railway"="tram"](around:5,$coordStr);way["railway"="tram"](around:5,$coordStr););out geom;'));
 
@@ -252,8 +254,8 @@ Future<Elements> fetchElements(coords) async {
   }
 }
 
-nearRailway(coords) async {
-  Elements elements = await fetchElements(coords);
+nearRailway(coordsLat, CoordsLong) async {
+  Elements elements = await fetchElements(coordsLat, CoordsLong);
   if (elements.type == "way") {
     return true;
   } else {

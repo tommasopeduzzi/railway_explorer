@@ -8,6 +8,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:background_location/background_location.dart';
 
+import 'api.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -80,6 +82,7 @@ class _HomePageState extends State<HomePage> {
     print(location.altitude);
     print(location.accuracy);
     print(location.time);
+    print(nearRailway(location.latitude, location.longitude));
   }
 
 //Optional
