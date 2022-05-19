@@ -13,7 +13,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key key}) : super(key: key);
+  const MyApp({Key? key}) : super(key: key);
 
   // This widget is the root of your application.
   @override
@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key key, this.title}) : super(key: key);
+  const HomePage({Key? key, required this.title}) : super(key: key);
   final String title;
   @override
   State<HomePage> createState() => _HomePageState();
