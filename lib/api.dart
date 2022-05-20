@@ -242,7 +242,7 @@ Future<Elements> fetchElements(LatLng location) async {
   final coordStr =
       location.latitude.toString() + ',' + location.longitude.toString();
   final response = await http.get(Uri.parse(
-      'https://overpass-api.de/api/interpreter?data=[out:json];(node["railway"="rail"](around:5,$coordStr);way["railway"="rail"](around:5,$coordStr);node["railway"="tram"](around:5,$coordStr);way["railway"="tram"](around:5,$coordStr););out geom;'));
+      'https://overpass.kumi.systems/api/interpreter?data=[out:json];(node["railway"="rail"](around:5,$coordStr);way["railway"="rail"](around:5,$coordStr);node["railway"="tram"](around:5,$coordStr);way["railway"="tram"](around:5,$coordStr););out geom;'));
 
   if (response.statusCode == 200) {
     // If the server did return a 200 OK response,
@@ -251,6 +251,6 @@ Future<Elements> fetchElements(LatLng location) async {
   } else {
     // If the server did not return a 200 OK response,
     // then throw an exception.
-    throw Exception('C\'est l\'erreur');
+    throw Exception('C\'est l\'erreur d\'api numéro ${response.statusCode}');
   }
 }
