@@ -1,5 +1,4 @@
 import 'dart:isolate';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
@@ -38,6 +37,22 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  List<LatLng>? checkedLocations;
+  int count = 0;
+  bool railway = false;
+
+  Future<bool> nearRailway(LatLng location) async {
+    if (checkedLocations!.contains(LatLng(
+      double.parse(location.latitude.toStringAsFixed(4)),
+      double.parse(location.longitude.toStringAsFixed(4)),
+    ))) {
+      return false;
+    }
+    checkedLocations!.add(location);
+    Elements elements = await fetchElements(location);
+    return elements.type == "way";
+  }
+
   void checkPermissions() async {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -46,17 +61,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   ReceivePort receivePort = ReceivePort();
-  static const String _locatorIsolateName = "locator_isolate";
-
   @override
   void initState() {
     super.initState();
-
-    IsolateNameServer.registerPortWithName(
-        receivePort.sendPort, _locatorIsolateName);
-    receivePort.listen((dynamic data) {
-      // do something with data
-    });
+    checkedLocations ??= <LatLng>[];
     initPlatformState();
     startLocationService();
   }
@@ -70,19 +78,27 @@ class _HomePageState extends State<HomePage> {
     await BackgroundLocation.setAndroidConfiguration(1000);
     await BackgroundLocation.startLocationService();
     BackgroundLocation.getLocationUpdates((location) {
-      callback(location);
       print("got location");
+      callback(location);
     });
   }
 
-  static void callback(Location location) async {
-    print(location.latitude);
-    print(location.longitude);
-    print(location.speed);
-    print(location.altitude);
-    print(location.accuracy);
-    print(location.time);
-    print(nearRailway(location.latitude, location.longitude));
+  void callback(Location location) async {
+    if (railway == true) {
+      print(" !!! near railway");
+      print(location.latitude);
+      print(location.longitude);
+      print(location.speed);
+      print(location.altitude);
+      print(location.accuracy);
+      print(location.time);
+    }
+    if (count % 5 == 0) {
+      railway =
+          await nearRailway(LatLng(location.latitude!, location.longitude!));
+      count = -1;
+    }
+    count++;
   }
 
 //Optional
