@@ -138,6 +138,16 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
+          PolylineLayerWidget(
+            options: PolylineLayerOptions(
+              polylines: [
+                new Polyline(
+                    points: checkedLocations!,
+                    strokeWidth: 2.0,
+                    color: Colors.red)
+              ],
+            ),
+          ),
           LocationMarkerLayerWidget(),
         ],
       ),

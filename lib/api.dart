@@ -244,13 +244,14 @@ Future<Elements> fetchElements(LatLng location) async {
   final response = await http.get(Uri.parse(
       'https://overpass.kumi.systems/api/interpreter?data=[out:json];(node["railway"="rail"](around:5,$coordStr);way["railway"="rail"](around:5,$coordStr);node["railway"="tram"](around:5,$coordStr);way["railway"="tram"](around:5,$coordStr););out geom;'));
 
-  if (response.statusCode == 200) {
+  if (response.statusCode == 200 || response.statusCode == 203) {
     // If the server did return a 200 OK response,
     // then parse the JSON.
     return Elements.fromJson(jsonDecode(response.body));
   } else {
     // If the server did not return a 200 OK response,
     // then throw an exception.
-    throw Exception('C\'est l\'erreur d\'api numéro ${response.statusCode}');
+    throw Exception(
+        'C\'est l\'erreur d\'api numéro ${response.statusCode}. Please visit http.cat/${response.statusCode} for further information.');
   }
 }
