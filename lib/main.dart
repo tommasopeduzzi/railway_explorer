@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:isolate';
 
 import 'package:flutter/material.dart';
@@ -9,6 +11,7 @@ import 'package:background_location/background_location.dart';
 import 'package:tuple/tuple.dart';
 
 import 'api.dart';
+import 'settings.dart';
 
 void main() {
   runApp(const MyApp());
@@ -54,7 +57,7 @@ class _HomePageState extends State<HomePage> {
       }
     }
     List<Elements> response = await fetchElements(location);
-    return response.length > 0;
+    return response.isNotEmpty;
   }
 
   void checkPermissions() async {
@@ -64,7 +67,6 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  ReceivePort receivePort = ReceivePort();
   @override
   void initState() {
     super.initState();
@@ -81,7 +83,6 @@ class _HomePageState extends State<HomePage> {
     await BackgroundLocation.setAndroidConfiguration(1000);
     await BackgroundLocation.startLocationService();
     BackgroundLocation.getLocationUpdates((location) {
-      print("got location");
       callback(location);
     });
   }
@@ -116,7 +117,8 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: Icon(Icons.settings),
             onPressed: () {
-              print("pressed settings button");
+              Navigator.push(
+                  context, MaterialPageRoute(builder: (context) => Settings()));
             },
           ),
         ],
