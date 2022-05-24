@@ -238,16 +238,18 @@ class Tags {
   }
 }
 
-Future<Elements> fetchElements(LatLng location) async {
+Future<List<Elements>> fetchElements(LatLng location) async {
   final coordStr =
       location.latitude.toString() + ',' + location.longitude.toString();
+  int minDist = 1000; // for debug purposes
+  // TODO: Fix
   final response = await http.get(Uri.parse(
-      'https://overpass.kumi.systems/api/interpreter?data=[out:json];(node["railway"="rail"](around:5,$coordStr);way["railway"="rail"](around:5,$coordStr);node["railway"="tram"](around:5,$coordStr);way["railway"="tram"](around:5,$coordStr););out geom;'));
+      'https://overpass.kumi.systems/api/interpreter?data=[out:json];(node["railway"="rail"](around:$minDist,$coordStr);way["railway"="rail"](around:$minDist,$coordStr);node["railway"="tram"](around:$minDist,$coordStr);way["railway"="tram"](around:$minDist,$coordStr););out geom;'));
 
   if (response.statusCode == 200 || response.statusCode == 203) {
     // If the server did return a 200 OK response,
     // then parse the JSON.
-    return Elements.fromJson(jsonDecode(response.body));
+    return Response.fromJson(jsonDecode(response.body)).elements!;
   } else {
     // If the server did not return a 200 OK response,
     // then throw an exception.

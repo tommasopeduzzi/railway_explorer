@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:background_location/background_location.dart';
+import 'package:tuple/tuple.dart';
 
 import 'api.dart';
 
@@ -37,20 +38,23 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<LatLng>? checkedLocations;
+  List<Tuple2<LatLng, bool>>? checkedLocations = [];
   int count = 0;
   bool railway = false;
+  List<List<LatLng>> railways = [];
 
   Future<bool> nearRailway(LatLng location) async {
-    if (checkedLocations!.contains(LatLng(
+    LatLng roundedLocation = LatLng(
       double.parse(location.latitude.toStringAsFixed(4)),
       double.parse(location.longitude.toStringAsFixed(4)),
-    ))) {
-      return false;
+    );
+    for (Tuple2<LatLng, bool> location in checkedLocations!) {
+      if (location.item1 == roundedLocation) {
+        return location.item2;
+      }
     }
-    checkedLocations!.add(location);
-    Elements elements = await fetchElements(location);
-    return elements.type == "way";
+    List<Elements> response = await fetchElements(location);
+    return response.length > 0;
   }
 
   void checkPermissions() async {
@@ -64,9 +68,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    checkedLocations ??= <LatLng>[];
+    checkedLocations ??= [];
     initPlatformState();
-    startLocationService();
   }
 
   Future<void> initPlatformState() async {
@@ -84,29 +87,24 @@ class _HomePageState extends State<HomePage> {
   }
 
   void callback(Location location) async {
-    if (railway == true) {
-      print(" !!! near railway");
-      print(location.latitude);
-      print(location.longitude);
-      print(location.speed);
-      print(location.altitude);
-      print(location.accuracy);
-      print(location.time);
+    if (railway) {
+      setState(() {
+        railways.last.add(LatLng(location.latitude!, location.longitude!));
+      });
     }
     if (count % 5 == 0) {
-      railway =
+      bool near =
           await nearRailway(LatLng(location.latitude!, location.longitude!));
+      if (!railway && near) {
+        setState(() {
+          railways.add(<LatLng>[]);
+        });
+      }
+      railway = near;
       count = -1;
     }
     count++;
   }
-
-//Optional
-  static void notificationCallback() {
-    print('User clicked on the notification');
-  }
-
-  void startLocationService() {}
 
   @override
   Widget build(BuildContext context) {
@@ -140,12 +138,13 @@ class _HomePageState extends State<HomePage> {
           ),
           PolylineLayerWidget(
             options: PolylineLayerOptions(
-              polylines: [
-                new Polyline(
-                    points: checkedLocations!,
-                    strokeWidth: 2.0,
-                    color: Colors.red)
-              ],
+              polylines: railways.map((railway) {
+                return Polyline(
+                  points: railway,
+                  strokeWidth: 5.0,
+                  color: Colors.red,
+                );
+              }).toList(),
             ),
           ),
           LocationMarkerLayerWidget(),
