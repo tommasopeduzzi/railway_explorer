@@ -12,6 +12,7 @@ import 'package:tuple/tuple.dart';
 
 import 'api.dart';
 import 'settings.dart';
+import 'railway.dart';
 
 void main() {
   runApp(const MyApp());
@@ -44,7 +45,7 @@ class _HomePageState extends State<HomePage> {
   List<Tuple2<LatLng, bool>>? checkedLocations = [];
   int count = 0;
   bool railway = false;
-  List<List<LatLng>> railways = [];
+  List<Railway> railways = [];
 
   Future<bool> nearRailway(LatLng location) async {
     LatLng roundedLocation = LatLng(
@@ -90,7 +91,8 @@ class _HomePageState extends State<HomePage> {
   void callback(Location location) async {
     if (railway) {
       setState(() {
-        railways.last.add(LatLng(location.latitude!, location.longitude!));
+        railways.last.points
+            .add(LatLng(location.latitude!, location.longitude!));
       });
     }
     if (count % 5 == 0) {
@@ -98,7 +100,7 @@ class _HomePageState extends State<HomePage> {
           await nearRailway(LatLng(location.latitude!, location.longitude!));
       if (!railway && near) {
         setState(() {
-          railways.add(<LatLng>[]);
+          railways.add(Railway());
         });
       }
       railway = near;
@@ -142,7 +144,7 @@ class _HomePageState extends State<HomePage> {
             options: PolylineLayerOptions(
               polylines: railways.map((railway) {
                 return Polyline(
-                  points: railway,
+                  points: railway.points,
                   strokeWidth: 5.0,
                   color: Colors.red,
                 );
