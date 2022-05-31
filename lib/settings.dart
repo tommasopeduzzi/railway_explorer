@@ -10,8 +10,26 @@ class Settings extends StatefulWidget {
 // Create state
 class _SettingsState extends State<Settings> {
   bool offlineMode = false;
-  Color railColour = Colors.green;
+  Color railColour = Color.fromARGB(255, 76, 175, 175);
+
+  void storeSettings() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool('offlineMode', offlineMode);
+  }
+
+  void LoadSettings() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      offlineMode = prefs.getBool('offlineMode') ?? false;
+    });
+  }
+
   @override
+  void initState() {
+    super.initState();
+    LoadSettings();
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -32,15 +50,19 @@ class _SettingsState extends State<Settings> {
                   setState(() {
                     offlineMode = value;
                   });
+                  storeSettings();
                 },
               ),
             ]),
+            Divider(
+              color: Colors.black,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Railway colour', style: TextStyle(fontSize: 20)),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
                       child: GestureDetector(
