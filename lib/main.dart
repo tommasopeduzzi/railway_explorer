@@ -28,6 +28,10 @@ class MyApp extends StatelessWidget {
       title: 'Railway Explorer',
       theme: ThemeData(
         primarySwatch: Colors.grey,
+        textTheme: Theme.of(context).textTheme.apply(
+              fontSizeFactor: 1.1,
+              fontSizeDelta: 2.0,
+            ),
       ),
       home: const HomePage(title: 'Railway Explorer'),
     );
