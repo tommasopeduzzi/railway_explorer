@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Response {
   double? version;
@@ -238,11 +239,18 @@ class Tags {
   }
 }
 
+int minDist = 5; // for debug purposes
+
+void loadMinDist() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  minDist = await prefs.getInt('tolerance') ?? 5;
+}
+
 Future<List<Elements>> fetchElements(LatLng location) async {
   final coordStr =
       location.latitude.toString() + ',' + location.longitude.toString();
-  int minDist = 10; // for debug purposes
-  // TODO: Fix
+  loadMinDist();
+  print(minDist);
   final response = await http.get(Uri.parse(
       'https://overpass.kumi.systems/api/interpreter?data=[out:json];(node["railway"="rail"](around:$minDist,$coordStr);way["railway"="rail"](around:$minDist,$coordStr);node["railway"="tram"](around:$minDist,$coordStr);way["railway"="tram"](around:$minDist,$coordStr););out geom;'));
 

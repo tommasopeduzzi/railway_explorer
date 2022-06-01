@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:numberpicker/numberpicker.dart';
 
 class Settings extends StatefulWidget {
   @override
@@ -9,6 +10,7 @@ class Settings extends StatefulWidget {
 
 // Create state
 class _SettingsState extends State<Settings> {
+  int railTolerance = 5;
   bool offlineMode = false;
   Color railColour = Color.fromARGB(255, 76, 175, 175);
 
@@ -16,6 +18,7 @@ class _SettingsState extends State<Settings> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool('offlineMode', offlineMode);
     prefs.setInt('railColour', railColour.value);
+    prefs.setInt('tolerance', railTolerance);
   }
 
   void loadSettings() async {
@@ -23,6 +26,7 @@ class _SettingsState extends State<Settings> {
     setState(() {
       offlineMode = prefs.getBool('offlineMode') ?? false;
       railColour = Color(prefs.getInt('railColour') ?? 0xFF76B5B5);
+      railTolerance = prefs.getInt('tolerance') ?? 5;
     });
   }
 
@@ -91,7 +95,7 @@ class _SettingsState extends State<Settings> {
                                     ),
                                   ),
                                   actions: <Widget>[
-                                    FlatButton(
+                                    TextButton(
                                       child: Text('Close'),
                                       onPressed: () {
                                         Navigator.of(context).pop();
@@ -105,6 +109,36 @@ class _SettingsState extends State<Settings> {
                     ),
                   ],
                 )
+              ],
+            ),
+            Divider(
+              color: Colors.black,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Rail Tolerance', style: TextStyle(fontSize: 20)),
+                SizedBox(
+                    width: 150,
+                    child: Center(
+                        child: Transform.scale(
+                            scale: 0.7,
+                            child: NumberPicker(
+                                haptics: true,
+                                minValue: 0,
+                                maxValue: 5000,
+                                itemWidth: 50,
+                                step: 5,
+                                value: railTolerance,
+                                axis: Axis.horizontal,
+                                onChanged: (railTolerance) {
+                                  setState(
+                                    () {
+                                      this.railTolerance = railTolerance;
+                                    },
+                                  );
+                                  storeSettings();
+                                }))))
               ],
             )
           ],
