@@ -9,6 +9,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:background_location/background_location.dart';
 import 'package:tuple/tuple.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api.dart';
 import 'settings.dart';
@@ -50,6 +51,8 @@ class _HomePageState extends State<HomePage> {
   int count = 0;
   bool railway = false;
   List<Railway> railways = [];
+  bool offlineMode = false;
+  Color railColour = Colors.red;
 
   Future<bool> nearRailway(LatLng location) async {
     LatLng roundedLocation = LatLng(
@@ -72,11 +75,25 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void loadSettings() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      railway = prefs.getBool('railway') ?? railway;
+      var newOfflineMode = prefs.getBool('offlineMode') ?? offlineMode;
+      if (newOfflineMode != offlineMode) {
+        railway = false;
+        offlineMode = newOfflineMode;
+      }
+      railColour = Color(prefs.getInt('railColour') ?? railColour.value);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     checkedLocations ??= [];
     initPlatformState();
+    loadSettings();
   }
 
   Future<void> initPlatformState() async {
@@ -99,7 +116,7 @@ class _HomePageState extends State<HomePage> {
             .add(LatLng(location.latitude!, location.longitude!));
       });
     }
-    if (count % 5 == 0) {
+    if (count % 5 == 0 && !offlineMode) {
       bool near =
           await nearRailway(LatLng(location.latitude!, location.longitude!));
       if (!railway && near) {
@@ -109,12 +126,18 @@ class _HomePageState extends State<HomePage> {
       }
       railway = near;
       count = -1;
+    } else if (offlineMode && !railway) {
+      setState(() {
+        railway = true;
+        railways.add(Railway());
+      });
     }
     count++;
   }
 
   @override
   Widget build(BuildContext context) {
+    loadSettings();
     checkPermissions();
     return Scaffold(
       appBar: AppBar(
@@ -150,7 +173,7 @@ class _HomePageState extends State<HomePage> {
                 return Polyline(
                   points: railway.points,
                   strokeWidth: 5.0,
-                  color: Colors.red,
+                  color: railColour,
                 );
               }).toList(),
             ),

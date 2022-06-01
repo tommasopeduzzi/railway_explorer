@@ -241,7 +241,7 @@ class Tags {
 Future<List<Elements>> fetchElements(LatLng location) async {
   final coordStr =
       location.latitude.toString() + ',' + location.longitude.toString();
-  int minDist = 1000; // for debug purposes
+  int minDist = 10; // for debug purposes
   // TODO: Fix
   final response = await http.get(Uri.parse(
       'https://overpass.kumi.systems/api/interpreter?data=[out:json];(node["railway"="rail"](around:$minDist,$coordStr);way["railway"="rail"](around:$minDist,$coordStr);node["railway"="tram"](around:$minDist,$coordStr);way["railway"="tram"](around:$minDist,$coordStr););out geom;'));
