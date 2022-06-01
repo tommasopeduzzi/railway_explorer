@@ -15,19 +15,21 @@ class _SettingsState extends State<Settings> {
   void storeSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool('offlineMode', offlineMode);
+    prefs.setInt('railColour', railColour.value);
   }
 
-  void LoadSettings() async {
+  void loadSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       offlineMode = prefs.getBool('offlineMode') ?? false;
+      railColour = Color(prefs.getInt('railColour') ?? 0xFF76B5B5);
     });
   }
 
   @override
   void initState() {
     super.initState();
-    LoadSettings();
+    loadSettings();
   }
 
   Widget build(BuildContext context) {
@@ -83,6 +85,7 @@ class _SettingsState extends State<Settings> {
                                         setState(() {
                                           railColour = color;
                                         });
+                                        storeSettings();
                                       },
                                       pickerAreaHeightPercent: 0.8,
                                     ),
