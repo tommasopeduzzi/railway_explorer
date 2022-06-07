@@ -113,7 +113,7 @@ class _HomePageState extends State<HomePage> {
     if (railway) {
       setState(() {
         railways.last.points
-            .add(LatLng(location.latitude!, location.longitude!));
+            .add(JsonLatLng(location.latitude!, location.longitude!));
       });
     }
     if (count % 5 == 0 && !offlineMode) {
@@ -171,7 +171,8 @@ class _HomePageState extends State<HomePage> {
             options: PolylineLayerOptions(
               polylines: railways.map((railway) {
                 return Polyline(
-                  points: railway.points,
+                  points:
+                      railway.points.map((e) => LatLng(e.lat, e.lng)).toList(),
                   strokeWidth: 5.0,
                   color: railColour,
                 );

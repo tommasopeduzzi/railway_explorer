@@ -30,6 +30,7 @@ dependencies:
   numberpicker: ^2.1.1
   flutter_colorpicker: ^1.0.3
   shared_preferences: ^2.0.15
+  json_annotation: ^4.4.0
   http: any
   tuple: ^2.0.0
   flutter_map: any
@@ -44,6 +45,8 @@ dependencies:
   cupertino_icons: ^1.0.2
 
 dev_dependencies:
+  build_runner: ^2.0.0
+  json_serializable: ^6.0.0 
   flutter_test:
     sdk: flutter
 
