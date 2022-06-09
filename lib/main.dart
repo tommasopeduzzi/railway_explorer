@@ -10,6 +10,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:background_location/background_location.dart';
 import 'package:tuple/tuple.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'api.dart';
 import 'settings.dart';
@@ -48,11 +49,40 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Tuple2<LatLng, bool>>? checkedLocations = [];
-  int count = 0;
+  int count = 1;
   bool railway = false;
   List<Railway> railways = [];
   bool offlineMode = false;
   Color railColour = Colors.red;
+
+  Future<File> getFile() async {
+    Directory appDocumentsDirectory = await getApplicationDocumentsDirectory();
+    String appDocumentsPath = appDocumentsDirectory.path;
+    String filePath = '$appDocumentsPath/save.json';
+    File file = File(filePath);
+    if (!await file.exists()) {
+      file.create();
+    }
+    return file;
+  }
+
+  void save() async {
+    File file = await getFile();
+    file.writeAsString(jsonEncode(railways));
+  }
+
+  void read() async {
+    File file = await getFile();
+    String contents = await file.readAsString();
+    if (contents != "") {
+      var decodedJson = jsonDecode(contents)
+          .map((railway) => Railway.fromJson(railway))
+          .toList();
+      setState(() {
+        railways = List<Railway>.from(decodedJson);
+      });
+    }
+  }
 
   Future<bool> nearRailway(LatLng location) async {
     LatLng roundedLocation = LatLng(
@@ -91,6 +121,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    read();
     checkedLocations ??= [];
     initPlatformState();
     loadSettings();
@@ -131,6 +162,9 @@ class _HomePageState extends State<HomePage> {
         railway = true;
         railways.add(Railway());
       });
+    }
+    if (count % 5 == 0) {
+      save();
     }
     count++;
   }

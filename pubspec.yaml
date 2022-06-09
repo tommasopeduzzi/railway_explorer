@@ -36,6 +36,7 @@ dependencies:
   flutter_map: any
   flutter_map_location_marker: any
   background_location: ^0.8.1
+  path_provider: any
   flutter:
     sdk: flutter
 
