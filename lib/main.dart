@@ -50,13 +50,17 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<Tuple2<LatLng, bool>>? checkedLocations = [];
   int count = 1;
+  int saveFreq = 30;
   bool railway = false;
   List<Railway> railways = [];
   bool offlineMode = false;
   Color railColour = Colors.red;
 
-  Future<File> getFile() async {
-    Directory appDocumentsDirectory = await getApplicationDocumentsDirectory();
+  Future<File?> getFile() async {
+    Directory? appDocumentsDirectory = await getExternalStorageDirectory();
+    if (appDocumentsDirectory == null) {
+      return null;
+    }
     String appDocumentsPath = appDocumentsDirectory.path;
     String filePath = '$appDocumentsPath/save.json';
     File file = File(filePath);
@@ -67,12 +71,14 @@ class _HomePageState extends State<HomePage> {
   }
 
   void save() async {
-    File file = await getFile();
+    File? file = await getFile();
+    if (file == null) return;
     file.writeAsString(jsonEncode(railways));
   }
 
   void read() async {
-    File file = await getFile();
+    File? file = await getFile();
+    if (file == null) return;
     String contents = await file.readAsString();
     if (contents != "") {
       var decodedJson = jsonDecode(contents)
@@ -108,6 +114,7 @@ class _HomePageState extends State<HomePage> {
   void loadSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
+      saveFreq = prefs.getInt('save') ?? saveFreq;
       railway = prefs.getBool('railway') ?? railway;
       var newOfflineMode = prefs.getBool('offlineMode') ?? offlineMode;
       if (newOfflineMode != offlineMode) {
@@ -163,7 +170,7 @@ class _HomePageState extends State<HomePage> {
         railways.add(Railway());
       });
     }
-    if (count % 5 == 0) {
+    if (count % saveFreq == 0) {
       save();
     }
     count++;

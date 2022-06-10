@@ -10,6 +10,7 @@ class Settings extends StatefulWidget {
 
 // Create state
 class _SettingsState extends State<Settings> {
+  int frequency = 30;
   int railTolerance = 5;
   bool offlineMode = false;
   Color railColour = Color.fromARGB(255, 76, 175, 175);
@@ -19,6 +20,7 @@ class _SettingsState extends State<Settings> {
     prefs.setBool('offlineMode', offlineMode);
     prefs.setInt('railColour', railColour.value);
     prefs.setInt('tolerance', railTolerance);
+    prefs.setInt('save', frequency);
   }
 
   void loadSettings() async {
@@ -27,6 +29,7 @@ class _SettingsState extends State<Settings> {
       offlineMode = prefs.getBool('offlineMode') ?? false;
       railColour = Color(prefs.getInt('railColour') ?? 0xFF76B5B5);
       railTolerance = prefs.getInt('tolerance') ?? 5;
+      frequency = prefs.getInt('save') ?? 30;
     });
   }
 
@@ -121,26 +124,62 @@ class _SettingsState extends State<Settings> {
                 SizedBox(
                     width: 150,
                     child: Center(
-                        child: Transform.scale(
-                            scale: 0.7,
-                            child: NumberPicker(
-                                haptics: true,
-                                minValue: 0,
-                                maxValue: 5000,
-                                itemWidth: 50,
-                                step: 5,
-                                value: railTolerance,
-                                axis: Axis.horizontal,
-                                onChanged: (railTolerance) {
-                                  setState(
-                                    () {
-                                      this.railTolerance = railTolerance;
-                                    },
-                                  );
-                                  storeSettings();
-                                }))))
+                      child: Transform.scale(
+                        scale: 0.7,
+                        child: NumberPicker(
+                          haptics: true,
+                          minValue: 0,
+                          maxValue: 5000,
+                          itemWidth: 50,
+                          step: 5,
+                          value: railTolerance,
+                          axis: Axis.horizontal,
+                          onChanged: (railTolerance) {
+                            setState(
+                              () {
+                                this.railTolerance = railTolerance;
+                              },
+                            );
+                            storeSettings();
+                          },
+                        ),
+                      ),
+                    ))
               ],
-            )
+            ),
+            Divider(
+              color: Colors.black,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Save Frequency', style: TextStyle(fontSize: 20)),
+                SizedBox(
+                    width: 150,
+                    child: Center(
+                      child: Transform.scale(
+                        scale: 0.7,
+                        child: NumberPicker(
+                          haptics: true,
+                          minValue: 0,
+                          maxValue: 5000,
+                          itemWidth: 50,
+                          step: 1,
+                          value: frequency,
+                          axis: Axis.horizontal,
+                          onChanged: (frequency) {
+                            setState(
+                              () {
+                                this.frequency = frequency;
+                              },
+                            );
+                            storeSettings();
+                          },
+                        ),
+                      ),
+                    ))
+              ],
+            ),
           ],
         ),
       ),
