@@ -52,7 +52,8 @@ dependencies:
 
 dev_dependencies:
   build_runner: ^2.0.0
-  json_serializable: ^6.0.0 
+  json_serializable: ^6.0.0
+  flutter_launcher_icons: any 
   flutter_test:
     sdk: flutter
 
@@ -65,6 +66,11 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon.png"
 
 # The following section is specific to Flutter packages.
 flutter:
