@@ -41,6 +41,7 @@ dependencies:
   latlong2: any
   geolocator: any
   intl: any
+  permission_handler: any
   flutter:
     sdk: flutter
 

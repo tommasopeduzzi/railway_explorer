@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:numberpicker/numberpicker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class Settings extends StatefulWidget {
   const Settings({Key? key}) : super(key: key);
@@ -182,6 +183,21 @@ class _SettingsState extends State<Settings> {
                     ))
               ],
             ),
+            const Divider(
+              color: Colors.black,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("Open Settings", style: TextStyle(fontSize: 20)),
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  onPressed: () {
+                    openAppSettings();
+                  },
+                ),
+              ],
+            )
           ],
         ),
       ),
