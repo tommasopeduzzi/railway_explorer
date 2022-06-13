@@ -1,4 +1,4 @@
-import 'package:latlong2/latlong.dart';
+import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:intl/intl.dart';
 part 'railway.g.dart';
@@ -16,6 +16,24 @@ class JsonLatLng {
   Map<String, dynamic> toJson() => _$JsonLatLngToJson(this);
 }
 
+@JsonSerializable()
+class JsonColor {
+  int r, g, b;
+  JsonColor(this.r, this.g, this.b);
+
+  factory JsonColor.fromJson(Map<String, dynamic> json) =>
+      _$JsonColorFromJson(json);
+
+  Map<String, dynamic> toJson() => _$JsonColorToJson(this);
+
+  Color toColor() => Color.fromARGB(255, r, g, b);
+
+  JsonColor.fromColor(Color color)
+      : r = color.red,
+        g = color.green,
+        b = color.blue;
+}
+
 DateFormat dateFormat = DateFormat('dd-MM-yyy');
 DateFormat timeFormat = DateFormat('HH:mm');
 
@@ -25,14 +43,13 @@ class Railway {
   String name = "";
   String description = "";
   DateTime dateTime = DateTime.now();
+  JsonColor? color;
 
-  Railway() {
-    this.name = "Railway journey on the " +
-        dateFormat.format(DateTime.now()) +
-        ' at ' +
-        timeFormat.format(DateTime.now());
-    this.description = "";
-    this.dateTime = DateTime.now();
+  Railway(this.color) {
+    name =
+        "Railway journey on the ${dateFormat.format(DateTime.now())} at ${timeFormat.format(DateTime.now())}";
+    description = "";
+    dateTime = DateTime.now();
   }
 
   factory Railway.fromJson(Map<String, dynamic> json) =>

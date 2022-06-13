@@ -38,6 +38,9 @@ dependencies:
   flutter_map_tappable_polyline: any
   background_location: ^0.8.1
   path_provider: any
+  latlong2: any
+  geolocator: any
+  intl: any
   flutter:
     sdk: flutter
 

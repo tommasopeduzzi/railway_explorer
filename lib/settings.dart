@@ -4,16 +4,17 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:numberpicker/numberpicker.dart';
 
 class Settings extends StatefulWidget {
+  const Settings({Key? key}) : super(key: key);
+
   @override
-  _SettingsState createState() => _SettingsState();
+  State<Settings> createState() => _SettingsState();
 }
 
-// Create state
 class _SettingsState extends State<Settings> {
   int frequency = 30;
   int railTolerance = 5;
   bool offlineMode = false;
-  Color railColour = Color.fromARGB(255, 76, 175, 175);
+  Color railColour = const Color.fromARGB(255, 76, 175, 175);
 
   void storeSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -39,18 +40,19 @@ class _SettingsState extends State<Settings> {
     loadSettings();
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings'),
+        title: const Text('Settings'),
       ),
       body: Container(
-        margin: EdgeInsets.all(20),
+        margin: const EdgeInsets.all(20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text('Offline mode', style: TextStyle(fontSize: 20)),
+              const Text('Offline mode', style: TextStyle(fontSize: 20)),
               Switch(
                 value: offlineMode,
                 activeTrackColor: Colors.lightGreenAccent,
@@ -63,65 +65,63 @@ class _SettingsState extends State<Settings> {
                 },
               ),
             ]),
-            Divider(
+            const Divider(
               color: Colors.black,
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Railway colour', style: TextStyle(fontSize: 20)),
+                const Text('Railway colour', style: TextStyle(fontSize: 20)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      child: GestureDetector(
-                        child: CircleAvatar(
-                          backgroundColor: railColour,
-                          radius: 20,
-                        ),
-                        onTap: (() {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: Text('Pick a colour'),
-                                content: SingleChildScrollView(
-                                  child: ColorPicker(
-                                    pickerColor: railColour,
-                                    onColorChanged: (color) {
-                                      setState(() {
-                                        railColour = color;
-                                      });
-                                      storeSettings();
-                                    },
-                                    pickerAreaHeightPercent: 0.8,
-                                  ),
+                    GestureDetector(
+                      onTap: (() {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: const Text('Pick a colour'),
+                              content: SingleChildScrollView(
+                                child: ColorPicker(
+                                  pickerColor: railColour,
+                                  onColorChanged: (color) {
+                                    setState(() {
+                                      railColour = color;
+                                    });
+                                    storeSettings();
+                                  },
+                                  pickerAreaHeightPercent: 0.8,
                                 ),
-                                actions: <Widget>[
-                                  TextButton(
-                                    child: Text('Close'),
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        }),
+                              ),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: const Text('Close'),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }),
+                      child: CircleAvatar(
+                        backgroundColor: railColour,
+                        radius: 20,
                       ),
                     ),
                   ],
                 )
               ],
             ),
-            Divider(
+            const Divider(
               color: Colors.black,
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Rail Tolerance', style: TextStyle(fontSize: 20)),
+                const Text('Rail Tolerance', style: TextStyle(fontSize: 20)),
                 SizedBox(
                   width: 150,
                   child: Center(
@@ -149,13 +149,13 @@ class _SettingsState extends State<Settings> {
                 )
               ],
             ),
-            Divider(
+            const Divider(
               color: Colors.black,
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Save Frequency', style: TextStyle(fontSize: 20)),
+                const Text('Save Frequency', style: TextStyle(fontSize: 20)),
                 SizedBox(
                     width: 150,
                     child: Center(

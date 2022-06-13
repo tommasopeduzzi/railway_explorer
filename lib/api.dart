@@ -9,29 +9,29 @@ class Response {
   Osm3s? osm3s;
   List<Elements>? elements;
 
-  Response({this.version, this.generator, this.osm3s, this.elements});
+  Response({version, generator, osm3s, elements});
 
   Response.fromJson(Map<String, dynamic> json) {
     version = json['version'];
     generator = json['generator'];
-    osm3s = json['osm3s'] != null ? new Osm3s.fromJson(json['osm3s']) : null;
+    osm3s = json['osm3s'] != null ? Osm3s.fromJson(json['osm3s']) : null;
     if (json['elements'] != null) {
       elements = <Elements>[];
       json['elements'].forEach((v) {
-        elements!.add(new Elements.fromJson(v));
+        elements!.add(Elements.fromJson(v));
       });
     }
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['version'] = this.version;
-    data['generator'] = this.generator;
-    if (this.osm3s != null) {
-      data['osm3s'] = this.osm3s!.toJson();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['version'] = version;
+    data['generator'] = generator;
+    if (osm3s != null) {
+      data['osm3s'] = osm3s!.toJson();
     }
-    if (this.elements != null) {
-      data['elements'] = this.elements!.map((v) => v.toJson()).toList();
+    if (elements != null) {
+      data['elements'] = elements!.map((v) => v.toJson()).toList();
     }
     return data;
   }
@@ -41,7 +41,7 @@ class Osm3s {
   String? timestampOsmBase;
   String? copyright;
 
-  Osm3s({this.timestampOsmBase, this.copyright});
+  Osm3s({timestampOsmBase, copyright});
 
   Osm3s.fromJson(Map<String, dynamic> json) {
     timestampOsmBase = json['timestamp_osm_base'];
@@ -49,9 +49,9 @@ class Osm3s {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['timestamp_osm_base'] = this.timestampOsmBase;
-    data['copyright'] = this.copyright;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['timestamp_osm_base'] = timestampOsmBase;
+    data['copyright'] = copyright;
     return data;
   }
 }
@@ -64,39 +64,37 @@ class Elements {
   List<Geometry>? geometry;
   Tags? tags;
 
-  Elements(
-      {this.type, this.id, this.bounds, this.nodes, this.geometry, this.tags});
+  Elements({type, id, bounds, nodes, geometry, tags});
 
   Elements.fromJson(Map<String, dynamic> json) {
     type = json['type'];
     id = json['id'];
-    bounds =
-        json['bounds'] != null ? new Bounds.fromJson(json['bounds']) : null;
+    bounds = json['bounds'] != null ? Bounds.fromJson(json['bounds']) : null;
     if (json['nodes'] != null) {
       nodes = json['nodes'].cast<int>();
     }
     if (json['geometry'] != null) {
       geometry = <Geometry>[];
       json['geometry'].forEach((v) {
-        geometry!.add(new Geometry.fromJson(v));
+        geometry!.add(Geometry.fromJson(v));
       });
     }
-    tags = json['tags'] != null ? new Tags.fromJson(json['tags']) : null;
+    tags = json['tags'] != null ? Tags.fromJson(json['tags']) : null;
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['type'] = this.type;
-    data['id'] = this.id;
-    if (this.bounds != null) {
-      data['bounds'] = this.bounds!.toJson();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['type'] = type;
+    data['id'] = id;
+    if (bounds != null) {
+      data['bounds'] = bounds!.toJson();
     }
-    data['nodes'] = this.nodes;
-    if (this.geometry != null) {
-      data['geometry'] = this.geometry!.map((v) => v.toJson()).toList();
+    data['nodes'] = nodes;
+    if (geometry != null) {
+      data['geometry'] = geometry!.map((v) => v.toJson()).toList();
     }
-    if (this.tags != null) {
-      data['tags'] = this.tags!.toJson();
+    if (tags != null) {
+      data['tags'] = tags!.toJson();
     }
     return data;
   }
@@ -108,7 +106,7 @@ class Bounds {
   double? maxlat;
   double? maxlon;
 
-  Bounds({this.minlat, this.minlon, this.maxlat, this.maxlon});
+  Bounds({minlat, minlon, maxlat, maxlon});
 
   Bounds.fromJson(Map<String, dynamic> json) {
     minlat = json['minlat'];
@@ -118,11 +116,11 @@ class Bounds {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['minlat'] = this.minlat;
-    data['minlon'] = this.minlon;
-    data['maxlat'] = this.maxlat;
-    data['maxlon'] = this.maxlon;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['minlat'] = minlat;
+    data['minlon'] = minlon;
+    data['maxlat'] = maxlat;
+    data['maxlon'] = maxlon;
     return data;
   }
 }
@@ -131,7 +129,7 @@ class Geometry {
   double? lat;
   double? lon;
 
-  Geometry({this.lat, this.lon});
+  Geometry({lat, lon});
 
   Geometry.fromJson(Map<String, dynamic> json) {
     lat = json['lat'];
@@ -139,9 +137,9 @@ class Geometry {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['lat'] = this.lat;
-    data['lon'] = this.lon;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['lat'] = lat;
+    data['lon'] = lon;
     return data;
   }
 }
@@ -169,26 +167,26 @@ class Tags {
   String? railwayTrackRef;
 
   Tags(
-      {this.electrified,
-      this.frequency,
-      this.gauge,
-      this.layer,
-      this.maxspeed,
-      this.oneway,
-      this.operator,
-      this.railway,
-      this.tracks,
-      this.tunnel,
-      this.voltage,
-      this.owner,
-      this.passengerLines,
-      this.railwayEtcs,
-      this.railwayPzb,
-      this.railwayTrafficMode,
-      this.service,
-      this.ref,
-      this.usage,
-      this.railwayTrackRef});
+      {electrified,
+      frequency,
+      gauge,
+      layer,
+      maxspeed,
+      oneway,
+      operator,
+      railway,
+      tracks,
+      tunnel,
+      voltage,
+      owner,
+      passengerLines,
+      railwayEtcs,
+      railwayPzb,
+      railwayTrafficMode,
+      service,
+      ref,
+      usage,
+      railwayTrackRef});
 
   Tags.fromJson(Map<String, dynamic> json) {
     electrified = json['electrified'];
@@ -214,27 +212,27 @@ class Tags {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['electrified'] = this.electrified;
-    data['frequency'] = this.frequency;
-    data['gauge'] = this.gauge;
-    data['layer'] = this.layer;
-    data['maxspeed'] = this.maxspeed;
-    data['oneway'] = this.oneway;
-    data['operator'] = this.operator;
-    data['railway'] = this.railway;
-    data['tracks'] = this.tracks;
-    data['tunnel'] = this.tunnel;
-    data['voltage'] = this.voltage;
-    data['owner'] = this.owner;
-    data['passenger_lines'] = this.passengerLines;
-    data['railway:etcs'] = this.railwayEtcs;
-    data['railway:pzb'] = this.railwayPzb;
-    data['railway:traffic_mode'] = this.railwayTrafficMode;
-    data['service'] = this.service;
-    data['ref'] = this.ref;
-    data['usage'] = this.usage;
-    data['railway:track_ref'] = this.railwayTrackRef;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['electrified'] = electrified;
+    data['frequency'] = frequency;
+    data['gauge'] = gauge;
+    data['layer'] = layer;
+    data['maxspeed'] = maxspeed;
+    data['oneway'] = oneway;
+    data['operator'] = operator;
+    data['railway'] = railway;
+    data['tracks'] = tracks;
+    data['tunnel'] = tunnel;
+    data['voltage'] = voltage;
+    data['owner'] = owner;
+    data['passenger_lines'] = passengerLines;
+    data['railway:etcs'] = railwayEtcs;
+    data['railway:pzb'] = railwayPzb;
+    data['railway:traffic_mode'] = railwayTrafficMode;
+    data['service'] = service;
+    data['ref'] = ref;
+    data['usage'] = usage;
+    data['railway:track_ref'] = railwayTrackRef;
     return data;
   }
 }
@@ -243,14 +241,13 @@ int minDist = 5; // for debug purposes
 
 void loadMinDist() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  minDist = await prefs.getInt('tolerance') ?? 5;
+  minDist = prefs.getInt('tolerance') ?? 5;
 }
 
 Future<List<Elements>> fetchElements(LatLng location) async {
   final coordStr =
-      location.latitude.toString() + ',' + location.longitude.toString();
+      "${location.latitude.toString()},${location.longitude.toString()}";
   loadMinDist();
-  print(minDist);
   final response = await http.get(Uri.parse(
       'https://overpass.kumi.systems/api/interpreter?data=[out:json];(node["railway"="rail"](around:$minDist,$coordStr);way["railway"="rail"](around:$minDist,$coordStr);node["railway"="tram"](around:$minDist,$coordStr);way["railway"="tram"](around:$minDist,$coordStr););out geom;'));
 

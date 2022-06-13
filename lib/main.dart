@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:flutter_map_tappable_polyline/flutter_map_tappable_polyline.dart';
 import 'package:latlong2/latlong.dart';
@@ -161,7 +161,7 @@ class _HomePageState extends State<HomePage> {
           await nearRailway(LatLng(location.latitude!, location.longitude!));
       if (!railway && near) {
         setState(() {
-          railways.add(Railway());
+          railways.add(Railway(JsonColor.fromColor(railColour)));
         });
       }
       railway = near;
@@ -182,10 +182,10 @@ class _HomePageState extends State<HomePage> {
         title: Text(widget.title),
         actions: [
           IconButton(
-            icon: Icon(Icons.settings),
+            icon: const Icon(Icons.settings),
             onPressed: () {
-              Navigator.push(
-                  context, MaterialPageRoute(builder: (context) => Settings()));
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const Settings()));
             },
           ),
         ],
@@ -204,7 +204,7 @@ class _HomePageState extends State<HomePage> {
               urlTemplate: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
               subdomains: ['a', 'b', 'c'],
               attributionBuilder: (_) {
-                return Text("© OpenStreetMap contributors");
+                return const Text("© OpenStreetMap contributors");
               },
             ),
           ),
@@ -216,7 +216,10 @@ class _HomePageState extends State<HomePage> {
                   points:
                       railway.points.map((e) => LatLng(e.lat, e.lng)).toList(),
                   strokeWidth: 5.0,
-                  color: railColour,
+                  color: railway.color == null
+                      ? railColour
+                      : Color.fromARGB(255, railway.color!.r, railway.color!.g,
+                          railway.color!.b),
                   tag: railways.indexOf(railway).toString(),
                 );
               }).toList(),
@@ -226,10 +229,10 @@ class _HomePageState extends State<HomePage> {
                   context: context,
                   builder: (context) {
                     return SimpleDialog(
-                      title: Text("Edit railway journey"),
+                      title: const Text("Edit railway journey"),
                       children: [
                         Container(
-                          padding: EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(10),
                           child: Column(
                             children: [
                               TextFormField(
@@ -262,7 +265,8 @@ class _HomePageState extends State<HomePage> {
                                   Text(
                                       DateFormat("mm:HH dd.MM.yyyy")
                                           .format(railways[index].dateTime),
-                                      style: TextStyle(color: Colors.grey)),
+                                      style:
+                                          const TextStyle(color: Colors.grey)),
                                   TextButton(
                                     child: const Text("Select date"),
                                     onPressed: () {
@@ -286,25 +290,75 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ],
                               ),
+                              Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text(
+                                      "Change Color",
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                    GestureDetector(
+                                      onTap: (() {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) {
+                                            return AlertDialog(
+                                              title:
+                                                  const Text('Pick a colour'),
+                                              content: SingleChildScrollView(
+                                                child: ColorPicker(
+                                                  pickerColor: railways[index]
+                                                      .color!
+                                                      .toColor(),
+                                                  onColorChanged: (color) {
+                                                    setState(() {
+                                                      railways[index].color =
+                                                          JsonColor.fromColor(
+                                                              color);
+                                                    });
+                                                  },
+                                                  pickerAreaHeightPercent: 0.8,
+                                                ),
+                                              ),
+                                              actions: <Widget>[
+                                                TextButton(
+                                                  child: const Text('Close'),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      }),
+                                      child: CircleAvatar(
+                                        backgroundColor:
+                                            railways[index].color!.toColor(),
+                                        radius: 20,
+                                      ),
+                                    ),
+                                  ]),
                               TextButton(
-                                child: Text("Delete",
+                                child: const Text("Delete",
                                     style: TextStyle(color: Colors.red)),
                                 onPressed: () {
                                   showDialog(
                                     context: context,
                                     builder: (context) {
                                       return AlertDialog(
-                                        title: Text(
+                                        title: const Text(
                                             "Are you sure you want to delete this journey?"),
                                         actions: [
                                           TextButton(
-                                            child: Text("No"),
+                                            child: const Text("No"),
                                             onPressed: () {
                                               Navigator.pop(context);
                                             },
                                           ),
                                           TextButton(
-                                            child: Text("Yes"),
+                                            child: const Text("Yes"),
                                             onPressed: () {
                                               setState(() {
                                                 railways.removeAt(index);
@@ -320,7 +374,7 @@ class _HomePageState extends State<HomePage> {
                                 },
                               ),
                               TextButton(
-                                child: Text("Close"),
+                                child: const Text("Close"),
                                 onPressed: () => Navigator.pop(context),
                               )
                             ],
@@ -331,10 +385,6 @@ class _HomePageState extends State<HomePage> {
                   },
                 );
               },
-              onMiss: (tapPosition) {
-                print('No polyline was tapped at position ' +
-                    tapPosition.globalPosition.toString());
-              },
             ),
           ),
         ],
@@ -344,19 +394,16 @@ class _HomePageState extends State<HomePage> {
           if (offlineMode) {
             setState(() {
               if (!railway) {
-                railways.add(Railway());
+                railways.add(Railway(JsonColor.fromColor(railColour)));
               }
               railway = !railway;
             });
           }
         },
         tooltip: 'Add railway',
-        child: offlineMode
-            ? Icon((!railway ? Icons.play_arrow : Icons.stop) as IconData)
-            : null,
-        backgroundColor: offlineMode
-            ? (railway ? Colors.red : Colors.green)
-            : (railway ? Colors.green : Colors.red),
+        backgroundColor: (railway ? Colors.green : Colors.red),
+        child:
+            offlineMode ? Icon(!railway ? Icons.play_arrow : Icons.stop) : null,
       ),
     );
   }
