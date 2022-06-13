@@ -42,6 +42,7 @@ dependencies:
   geolocator: any
   intl: any
   permission_handler: any
+  tutorial_coach_mark: any
   flutter:
     sdk: flutter
 

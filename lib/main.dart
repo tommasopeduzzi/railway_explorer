@@ -13,6 +13,7 @@ import 'package:background_location/background_location.dart';
 import 'package:tuple/tuple.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 import 'api.dart';
 import 'settings.dart';
@@ -21,6 +22,9 @@ import 'railway.dart';
 void main() {
   runApp(const MyApp());
 }
+
+GlobalKey floatingActionButtonKey = GlobalKey();
+GlobalKey settingsButton = GlobalKey();
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -53,7 +57,7 @@ class _HomePageState extends State<HomePage> {
   List<Tuple2<LatLng, bool>>? checkedLocations = [];
   int count = 1;
   int saveFreq = 30;
-  bool railway = false;
+  bool railway = false, watchedIntro = false;
   List<Railway> railways = [];
   bool offlineMode = false;
   Color railColour = Colors.red;
@@ -124,12 +128,59 @@ class _HomePageState extends State<HomePage> {
         offlineMode = newOfflineMode;
       }
       railColour = Color(prefs.getInt('railColour') ?? railColour.value);
+      watchedIntro = prefs.getBool("watchedIntro") ?? watchedIntro;
     });
+  }
+
+  void showTutorial() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (!watchedIntro) {
+      TutorialCoachMark(
+        context,
+        targets: [
+          TargetFocus(
+            keyTarget: floatingActionButtonKey,
+            alignSkip: Alignment.topRight,
+            contents: [
+              TargetContent(
+                align: ContentAlign.top,
+                child: const Text(
+                  '''While not in offline mode, this app will automatically track your location (also in the background if enabled in the permission settings) and draw lines on while you are near a railway. You can see whether you are near a railway here:''',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          TargetFocus(
+            alignSkip: Alignment.bottomRight,
+            keyTarget: settingsButton,
+            contents: [
+              TargetContent(
+                align: ContentAlign.bottom,
+                child: const Text(
+                  'Tap here to open settings: Here you can control different aspects of the app. One of them is offline mode: With offline mode, the app will not make any network requests. You can use the button below to toggle whether you are near a railway while in offline mode. While not, the app will use openstreetmap data to determine whether you are near a railway.',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ], // List<TargetFocus>
+        colorShadow: Colors.grey, // DEFAULT Colors.black
+      ).show();
+      await prefs.setBool('watchedIntro', true);
+    }
   }
 
   @override
   void initState() {
     super.initState();
+    showTutorial();
     read();
     checkedLocations ??= [];
     initPlatformState();
@@ -182,6 +233,7 @@ class _HomePageState extends State<HomePage> {
         title: Text(widget.title),
         actions: [
           IconButton(
+            key: settingsButton,
             icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(context,
@@ -390,6 +442,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        key: floatingActionButtonKey,
         onPressed: () {
           if (offlineMode) {
             setState(() {
