@@ -4,8 +4,10 @@ import 'dart:isolate';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
+import 'package:flutter_map_tappable_polyline/flutter_map_tappable_polyline.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:background_location/background_location.dart';
 import 'package:tuple/tuple.dart';
@@ -164,11 +166,6 @@ class _HomePageState extends State<HomePage> {
       }
       railway = near;
       count = -1;
-    } else if (offlineMode && !railway) {
-      setState(() {
-        railway = true;
-        railways.add(Railway());
-      });
     }
     if (count % saveFreq == 0) {
       save();
@@ -195,6 +192,9 @@ class _HomePageState extends State<HomePage> {
       ),
       body: FlutterMap(
         options: MapOptions(
+          plugins: [
+            TappablePolylineMapPlugin(),
+          ],
           center: LatLng(47.547484, 7.589800),
           zoom: 13.0,
         ),
@@ -208,20 +208,155 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
-          PolylineLayerWidget(
-            options: PolylineLayerOptions(
+          LocationMarkerLayerWidget(),
+          TappablePolylineLayerWidget(
+            options: TappablePolylineLayerOptions(
               polylines: railways.map((railway) {
-                return Polyline(
+                return TaggedPolyline(
                   points:
                       railway.points.map((e) => LatLng(e.lat, e.lng)).toList(),
                   strokeWidth: 5.0,
                   color: railColour,
+                  tag: railways.indexOf(railway).toString(),
                 );
               }).toList(),
+              onTap: (polylines, tapPosition) {
+                int index = int.parse(polylines[0].tag!);
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return SimpleDialog(
+                      title: Text("Edit railway journey"),
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(10),
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                decoration: const InputDecoration(
+                                  labelText: "Name",
+                                ),
+                                minLines: 1,
+                                maxLines: 1,
+                                initialValue: railways[index].name,
+                                onChanged: (value) {
+                                  setState(() => railways[index].name = value);
+                                },
+                              ),
+                              TextFormField(
+                                minLines: 3,
+                                maxLines: 7,
+                                initialValue: railways[index].description,
+                                decoration: const InputDecoration(
+                                  labelText: "Description",
+                                ),
+                                onChanged: (value) {
+                                  setState(() =>
+                                      railways[index].description = value);
+                                },
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                      DateFormat("mm:HH dd.MM.yyyy")
+                                          .format(railways[index].dateTime),
+                                      style: TextStyle(color: Colors.grey)),
+                                  TextButton(
+                                    child: const Text("Select date"),
+                                    onPressed: () {
+                                      showDatePicker(
+                                        context: context,
+                                        initialDate: railways[index].dateTime,
+                                        firstDate: railways[index]
+                                            .dateTime
+                                            .add(const Duration(days: -365)),
+                                        lastDate: railways[index]
+                                            .dateTime
+                                            .add(const Duration(days: 365)),
+                                      ).then((date) {
+                                        if (date != null) {
+                                          setState(() {
+                                            railways[index].dateTime = date;
+                                          });
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
+                              TextButton(
+                                child: Text("Delete",
+                                    style: TextStyle(color: Colors.red)),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return AlertDialog(
+                                        title: Text(
+                                            "Are you sure you want to delete this journey?"),
+                                        actions: [
+                                          TextButton(
+                                            child: Text("No"),
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                          ),
+                                          TextButton(
+                                            child: Text("Yes"),
+                                            onPressed: () {
+                                              setState(() {
+                                                railways.removeAt(index);
+                                              });
+                                              Navigator.pop(context);
+                                              Navigator.pop(context);
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                              TextButton(
+                                child: Text("Close"),
+                                onPressed: () => Navigator.pop(context),
+                              )
+                            ],
+                          ),
+                        )
+                      ],
+                    );
+                  },
+                );
+              },
+              onMiss: (tapPosition) {
+                print('No polyline was tapped at position ' +
+                    tapPosition.globalPosition.toString());
+              },
             ),
           ),
-          LocationMarkerLayerWidget(),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          if (offlineMode) {
+            setState(() {
+              if (!railway) {
+                railways.add(Railway());
+              }
+              railway = !railway;
+            });
+          }
+        },
+        tooltip: 'Add railway',
+        child: offlineMode
+            ? Icon((!railway ? Icons.play_arrow : Icons.stop) as IconData)
+            : null,
+        backgroundColor: offlineMode
+            ? (railway ? Colors.red : Colors.green)
+            : (railway ? Colors.green : Colors.red),
       ),
     );
   }

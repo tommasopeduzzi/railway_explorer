@@ -1,6 +1,6 @@
 import 'package:latlong2/latlong.dart';
 import 'package:json_annotation/json_annotation.dart';
-
+import 'package:intl/intl.dart';
 part 'railway.g.dart';
 
 @JsonSerializable()
@@ -16,11 +16,24 @@ class JsonLatLng {
   Map<String, dynamic> toJson() => _$JsonLatLngToJson(this);
 }
 
+DateFormat dateFormat = DateFormat('dd-MM-yyy');
+DateFormat timeFormat = DateFormat('HH:mm');
+
 @JsonSerializable()
 class Railway {
   List<JsonLatLng> points = [];
+  String name = "";
+  String description = "";
+  DateTime dateTime = DateTime.now();
 
-  Railway();
+  Railway() {
+    this.name = "Railway journey on the " +
+        dateFormat.format(DateTime.now()) +
+        ' at ' +
+        timeFormat.format(DateTime.now());
+    this.description = "";
+    this.dateTime = DateTime.now();
+  }
 
   factory Railway.fromJson(Map<String, dynamic> json) =>
       _$RailwayFromJson(json);

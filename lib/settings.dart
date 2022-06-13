@@ -81,32 +81,33 @@ class _SettingsState extends State<Settings> {
                         ),
                         onTap: (() {
                           showDialog(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  title: Text('Pick a colour'),
-                                  content: SingleChildScrollView(
-                                    child: ColorPicker(
-                                      pickerColor: railColour,
-                                      onColorChanged: (color) {
-                                        setState(() {
-                                          railColour = color;
-                                        });
-                                        storeSettings();
-                                      },
-                                      pickerAreaHeightPercent: 0.8,
-                                    ),
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text('Pick a colour'),
+                                content: SingleChildScrollView(
+                                  child: ColorPicker(
+                                    pickerColor: railColour,
+                                    onColorChanged: (color) {
+                                      setState(() {
+                                        railColour = color;
+                                      });
+                                      storeSettings();
+                                    },
+                                    pickerAreaHeightPercent: 0.8,
                                   ),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      child: Text('Close'),
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                    ),
-                                  ],
-                                );
-                              });
+                                ),
+                                actions: <Widget>[
+                                  TextButton(
+                                    child: Text('Close'),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
                         }),
                       ),
                     ),
@@ -122,29 +123,30 @@ class _SettingsState extends State<Settings> {
               children: [
                 Text('Rail Tolerance', style: TextStyle(fontSize: 20)),
                 SizedBox(
-                    width: 150,
-                    child: Center(
-                      child: Transform.scale(
-                        scale: 0.7,
-                        child: NumberPicker(
-                          haptics: true,
-                          minValue: 0,
-                          maxValue: 5000,
-                          itemWidth: 50,
-                          step: 5,
-                          value: railTolerance,
-                          axis: Axis.horizontal,
-                          onChanged: (railTolerance) {
-                            setState(
-                              () {
-                                this.railTolerance = railTolerance;
-                              },
-                            );
-                            storeSettings();
-                          },
-                        ),
+                  width: 150,
+                  child: Center(
+                    child: Transform.scale(
+                      scale: 0.7,
+                      child: NumberPicker(
+                        haptics: true,
+                        minValue: 0,
+                        maxValue: 5000,
+                        itemWidth: 50,
+                        step: 5,
+                        value: railTolerance,
+                        axis: Axis.horizontal,
+                        onChanged: (railTolerance) {
+                          setState(
+                            () {
+                              this.railTolerance = railTolerance;
+                            },
+                          );
+                          storeSettings();
+                        },
                       ),
-                    ))
+                    ),
+                  ),
+                )
               ],
             ),
             Divider(

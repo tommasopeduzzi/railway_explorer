@@ -35,6 +35,7 @@ dependencies:
   tuple: ^2.0.0
   flutter_map: any
   flutter_map_location_marker: any
+  flutter_map_tappable_polyline: any
   background_location: ^0.8.1
   path_provider: any
   flutter:
