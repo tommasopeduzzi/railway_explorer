@@ -31,6 +31,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Railway Explorer',
       theme: ThemeData(
         primarySwatch: Colors.grey,
@@ -55,7 +56,7 @@ class _HomePageState extends State<HomePage> {
   List<Tuple2<LatLng, bool>>? checkedLocations = [];
   int count = 1;
   int saveFreq = 30;
-  bool railway = false, watchedIntro = false;
+  bool railway = false;
   List<Railway> railways = [];
   bool offlineMode = false;
   Color railColour = Colors.red;
@@ -126,8 +127,6 @@ class _HomePageState extends State<HomePage> {
         offlineMode = newOfflineMode;
       }
       railColour = Color(prefs.getInt('railColour') ?? railColour.value);
-      watchedIntro = false;
-      // prefs.getBool("watchedIntro") ?? watchedIntro;
     });
   }
 
@@ -161,8 +160,8 @@ class _HomePageState extends State<HomePage> {
 
   void showTutorial() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('offlineMode', false);
-    if (!watchedIntro) {
+    var watchedIntro = prefs.getBool('watchedIntro') ?? false;
+    if (!watchedIntro) if (!watchedIntro) {
       tutorialCoachMark = TutorialCoachMark(
         context,
         targets: targets, // List<TargetFocus>
@@ -170,8 +169,10 @@ class _HomePageState extends State<HomePage> {
         onClickTarget: (target) {
           advanceTutorial(target);
         },
+        onFinish: () {
+          prefs.setBool('watchedIntro', true);
+        },
       )..show();
-      await prefs.setBool('watchedIntro', true);
     }
   }
 
