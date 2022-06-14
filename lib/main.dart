@@ -19,13 +19,11 @@ import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'api.dart';
 import 'settings.dart';
 import 'railway.dart';
+import 'tutorial.dart';
 
 void main() {
   runApp(const MyApp());
 }
-
-GlobalKey floatingActionButtonKey = GlobalKey();
-GlobalKey settingsButton = GlobalKey();
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -138,52 +136,52 @@ class _HomePageState extends State<HomePage> {
         offlineMode = newOfflineMode;
       }
       railColour = Color(prefs.getInt('railColour') ?? railColour.value);
-      watchedIntro = prefs.getBool("watchedIntro") ?? watchedIntro;
+      watchedIntro = false;
+      // prefs.getBool("watchedIntro") ?? watchedIntro;
     });
   }
 
   // Function to play tutorial
+  void enableOfflineMode() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool('offlineMode', true);
+  }
+
+  void advanceTutorial(TargetFocus target) {
+    if (tutorialCoachMark == null) return;
+    if (target.identify == "settingsButton") {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => Settings(),
+        ),
+      );
+    } else if (target.identify == "offlineModeSwitch") {
+      enableOfflineMode();
+      Navigator.pop(context);
+    } else if (target.identify == "floatingActionButton2") {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => Settings(),
+        ),
+      );
+    } else if (target.identify == "phoneSettingsButton") {
+      Navigator.pop(context);
+    }
+    tutorialCoachMark!.next();
+  }
+
   void showTutorial() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('offlineMode', false);
     if (!watchedIntro) {
-      TutorialCoachMark(
+      tutorialCoachMark = TutorialCoachMark(
         context,
-        targets: [
-          TargetFocus(
-            keyTarget: floatingActionButtonKey,
-            alignSkip: Alignment.topRight,
-            contents: [
-              TargetContent(
-                align: ContentAlign.top,
-                child: const Text(
-                  '''While not in offline mode, this app will automatically track your location (also in the background if enabled in the permission settings) and draw lines on while you are near a railway. You can see whether you are near a railway here:''',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          TargetFocus(
-            alignSkip: Alignment.bottomRight,
-            keyTarget: settingsButton,
-            contents: [
-              TargetContent(
-                align: ContentAlign.bottom,
-                child: const Text(
-                  'Tap here to open settings: Here you can control different aspects of the app. One of them is offline mode: With offline mode, the app will not make any network requests. You can use the button below to toggle whether you are near a railway while in offline mode. While not, the app will use openstreetmap data to determine whether you are near a railway.',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ], // List<TargetFocus>
+        targets: targets, // List<TargetFocus>
         colorShadow: Colors.grey, // DEFAULT Colors.black
-      ).show();
+        onClickTarget: (target) {
+          advanceTutorial(target);
+        },
+      )..show();
       await prefs.setBool('watchedIntro', true);
     }
   }
