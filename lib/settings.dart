@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:restart_app/restart_app.dart';
 
 //class for the settings page
 import 'tutorial.dart';
@@ -41,6 +42,11 @@ class _SettingsState extends State<Settings> {
       railTolerance = prefs.getInt('tolerance') ?? 5;
       frequency = prefs.getInt('save') ?? 30;
     });
+  }
+
+  void resetTutorial() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('watchedIntro', false);
   }
 
   //Call function to load settings in innitState to display current settings
@@ -220,6 +226,23 @@ class _SettingsState extends State<Settings> {
                   icon: const Icon(Icons.settings),
                   onPressed: () {
                     openAppSettings(); //Open app settings when pressed
+                  },
+                ),
+              ],
+            ),
+            const Divider(
+              //Divider between save frequency and open app settings
+              color: Colors.black,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("Reset Tutorial", style: TextStyle(fontSize: 20)),
+                IconButton(
+                  icon: const Icon(Icons.restore),
+                  onPressed: () {
+                    resetTutorial();
+                    Restart.restartApp(); //Reset tutorial when pressed
                   },
                 ),
               ],
