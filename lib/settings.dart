@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:railway_explorer/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:permission_handler/permission_handler.dart';
+
+import 'tutorial.dart';
 
 class Settings extends StatefulWidget {
   const Settings({Key? key}) : super(key: key);
@@ -55,6 +58,7 @@ class _SettingsState extends State<Settings> {
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               const Text('Offline mode', style: TextStyle(fontSize: 20)),
               Switch(
+                key: offlineModeSwitch,
                 value: offlineMode,
                 activeTrackColor: Colors.lightGreenAccent,
                 activeColor: Colors.green,
@@ -77,6 +81,7 @@ class _SettingsState extends State<Settings> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     GestureDetector(
+                      key: railColourPicker,
                       onTap: (() {
                         showDialog(
                           context: context,
@@ -129,6 +134,7 @@ class _SettingsState extends State<Settings> {
                     child: Transform.scale(
                       scale: 0.7,
                       child: NumberPicker(
+                        key: railTolerancePicker,
                         haptics: true,
                         minValue: 0,
                         maxValue: 5000,
@@ -163,6 +169,7 @@ class _SettingsState extends State<Settings> {
                       child: Transform.scale(
                         scale: 0.7,
                         child: NumberPicker(
+                          key: frequencyPicker,
                           haptics: true,
                           minValue: 0,
                           maxValue: 5000,
@@ -191,6 +198,7 @@ class _SettingsState extends State<Settings> {
               children: [
                 const Text("Open Settings", style: TextStyle(fontSize: 20)),
                 IconButton(
+                  key: phoneSettingsButton,
                   icon: const Icon(Icons.settings),
                   onPressed: () {
                     openAppSettings();
