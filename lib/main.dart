@@ -172,7 +172,7 @@ class _HomePageState extends State<HomePage> {
   void showTutorial() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var watchedIntro = prefs.getBool('watchedIntro') ?? false;
-    if (!watchedIntro) if (!watchedIntro) {
+    if (!watchedIntro) {
       tutorialCoachMark = TutorialCoachMark(
         context,
         targets: targets, // List<TargetFocus>
