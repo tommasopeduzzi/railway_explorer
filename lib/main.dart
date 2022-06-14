@@ -1,6 +1,7 @@
+// import nessecary dart core libaries
 import 'dart:convert';
 import 'dart:io';
-
+// import nessecary packages
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
@@ -14,7 +15,7 @@ import 'package:tuple/tuple.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
-
+// import nessecary files
 import 'api.dart';
 import 'settings.dart';
 import 'railway.dart';
@@ -27,14 +28,15 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
+  // Build the app
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Railway Explorer',
       theme: ThemeData(
-        primarySwatch: Colors.grey,
+        primarySwatch:
+            Colors.grey, // Set the default colour of the app and text Styles
         textTheme: Theme.of(context).textTheme.apply(
               fontSizeFactor: 1.1,
               fontSizeDelta: 2.0,
@@ -53,6 +55,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // Initialize variables
   List<Tuple2<LatLng, bool>>? checkedLocations = [];
   int count = 1;
   int saveFreq = 30;
@@ -61,6 +64,7 @@ class _HomePageState extends State<HomePage> {
   bool offlineMode = false;
   Color railColour = Colors.red;
 
+  // Function to get File Object for Saving
   Future<File?> getFile() async {
     Directory? appDocumentsDirectory = await getExternalStorageDirectory();
     if (appDocumentsDirectory == null) {
@@ -75,12 +79,14 @@ class _HomePageState extends State<HomePage> {
     return file;
   }
 
+  // Function to save railways to file
   void save() async {
     File? file = await getFile();
     if (file == null) return;
     file.writeAsString(jsonEncode(railways));
   }
 
+  // Function to load railways from file
   void read() async {
     File? file = await getFile();
     if (file == null) return;
@@ -95,6 +101,8 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Function to check if the user is near a railway,
+  // if the user has moved more than 10m, it will check with the Overpass API
   Future<bool> nearRailway(LatLng location) async {
     LatLng roundedLocation = LatLng(
       double.parse(location.latitude.toStringAsFixed(4)),
@@ -109,6 +117,7 @@ class _HomePageState extends State<HomePage> {
     return response.isNotEmpty;
   }
 
+  //Function to check permissions.
   void checkPermissions() async {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -116,6 +125,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Fuction to load settings from shared preferences
   void loadSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -130,6 +140,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // Function to play tutorial
   void enableOfflineMode() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool('offlineMode', true);
@@ -176,7 +187,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  @override
+  @override // Initialize the app and load settings and railways
   void initState() {
     super.initState();
     showTutorial();
@@ -186,6 +197,8 @@ class _HomePageState extends State<HomePage> {
     loadSettings();
   }
 
+  // Function to satart tracking and set up location services
+  // This also generates the notification to let the user know that the app is running
   Future<void> initPlatformState() async {
     await BackgroundLocation.setAndroidNotification(
       title: 'Railway Explorer',
@@ -199,6 +212,8 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  // This function is called every time the user moves,
+  // it checks if the user is near a railway and updates the map
   void callback(Location location) async {
     if (railway) {
       setState(() {
@@ -223,10 +238,10 @@ class _HomePageState extends State<HomePage> {
     count++;
   }
 
-  @override
+  @override // Build the app
   Widget build(BuildContext context) {
-    loadSettings();
-    checkPermissions();
+    loadSettings(); // Load settings every time the app is built
+    checkPermissions(); // Check permissions every time the app is built
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -242,12 +257,13 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: FlutterMap(
+        // Add a map using Plugin Flutter Map
         options: MapOptions(
           plugins: [
             TappablePolylineMapPlugin(),
           ],
-          center: LatLng(47.547484, 7.589800),
-          zoom: 13.0,
+          center: LatLng(47.35185817238327, 7.907706238342396),
+          zoom: 10,
         ),
         children: [
           TileLayerWidget(
@@ -262,19 +278,26 @@ class _HomePageState extends State<HomePage> {
           LocationMarkerLayerWidget(),
           TappablePolylineLayerWidget(
             options: TappablePolylineLayerOptions(
+              // Add tappable polylines using Plugin flutter map tappable polyline.
               polylines: railways.map((railway) {
                 return TaggedPolyline(
-                  points:
-                      railway.points.map((e) => LatLng(e.lat, e.lng)).toList(),
+                  points: railway.points
+                      .map((e) => LatLng(e.lat, e.lng))
+                      .toList(), // Make polylines from the points
                   strokeWidth: 5.0,
                   color: railway.color == null
                       ? railColour
-                      : Color.fromARGB(255, railway.color!.r, railway.color!.g,
+                      : Color.fromARGB(
+                          255,
+                          railway.color!.r,
+                          railway.color!
+                              .g, // load colour , if it is not individually set use standart colour.
                           railway.color!.b),
                   tag: railways.indexOf(railway).toString(),
                 );
               }).toList(),
               onTap: (polylines, tapPosition) {
+                // When the user taps a polyline open a dialog with the railway details
                 int index = int.parse(polylines[0].tag!);
                 showDialog(
                   context: context,
