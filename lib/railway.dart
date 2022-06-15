@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 part 'railway.g.dart';
 
 @JsonSerializable() // This class is serializable to JSON
@@ -51,10 +52,17 @@ class Railway {
   String name = "";
   String description = "";
   DateTime dateTime = DateTime.now();
-  JsonColor? color;
+  JsonColor color = JsonColor.fromColor(const Color(0xFFFF0000));
 
-  Railway(this.color) {
+  void setColor() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    color = JsonColor.fromColor(
+        Color(preferences.getInt('railColour') ?? 0xFFFF0000));
+  }
+
+  Railway() {
     // Constructor
+    setColor();
     name =
         "Railway journey on the ${dateFormat.format(DateTime.now())} at ${timeFormat.format(DateTime.now())}";
     description = "";

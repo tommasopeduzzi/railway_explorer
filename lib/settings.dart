@@ -1,6 +1,5 @@
 //Import nessecay libraries
 import 'package:flutter/material.dart';
-import 'package:railway_explorer/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:numberpicker/numberpicker.dart';

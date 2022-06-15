@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
-import 'main.dart';
-
 GlobalKey floatingActionButtonKey = GlobalKey();
 GlobalKey settingsButton = GlobalKey();
 GlobalKey offlineModeSwitch = GlobalKey();
@@ -22,7 +20,7 @@ List<TargetFocus> targets = [
       TargetContent(
         align: ContentAlign.top,
         child: const Text(
-          "While you are online, you can see whether you are near enough to a railway for the app to draw a here:",
+          "While you are online, you can see whether you are near enough to a railway for the app to record a journey.",
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -150,7 +148,7 @@ List<TargetFocus> targets = [
           top: 520,
         ),
         child: const Text(
-          "This  button takes you directly to the phone settings for the app. Be sure, that location access is always permitted and all battery optimizations are turned off, as this will casue the app to be terminated.",
+          "This  button takes you directly to the phone settings for the app. Be sure, that location access is always permitted and all battery optimizations are turned off, as this will cause the app to be terminated.",
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -163,8 +161,8 @@ List<TargetFocus> targets = [
     identify: "homeScreen",
     alignSkip: Alignment.bottomLeft,
     targetPosition: TargetPosition(
-      Size(300, 800),
-      Offset(150, 400),
+      const Size(300, 800),
+      const Offset(150, 400),
     ),
     radius: 50,
     contents: [

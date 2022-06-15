@@ -29,17 +29,14 @@ Map<String, dynamic> _$JsonColorToJson(JsonColor instance) => <String, dynamic>{
       'b': instance.b,
     };
 
-Railway _$RailwayFromJson(Map<String, dynamic> json) => Railway(
-      json['color'] == null
-          ? null
-          : JsonColor.fromJson(json['color'] as Map<String, dynamic>),
-    )
-      ..points = (json['points'] as List<dynamic>)
-          .map((e) => JsonLatLng.fromJson(e as Map<String, dynamic>))
-          .toList()
-      ..name = json['name'] as String
-      ..description = json['description'] as String
-      ..dateTime = DateTime.parse(json['dateTime'] as String);
+Railway _$RailwayFromJson(Map<String, dynamic> json) => Railway()
+  ..points = (json['points'] as List<dynamic>)
+      .map((e) => JsonLatLng.fromJson(e as Map<String, dynamic>))
+      .toList()
+  ..name = json['name'] as String
+  ..description = json['description'] as String
+  ..dateTime = DateTime.parse(json['dateTime'] as String)
+  ..color = JsonColor.fromJson(json['color'] as Map<String, dynamic>);
 
 Map<String, dynamic> _$RailwayToJson(Railway instance) => <String, dynamic>{
       'points': instance.points,
