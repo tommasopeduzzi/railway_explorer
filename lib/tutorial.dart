@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
+// The keys for the elements, so that they can be referenced later in the tutorial.
 GlobalKey floatingActionButtonKey = GlobalKey();
 GlobalKey settingsButton = GlobalKey();
 GlobalKey offlineModeSwitch = GlobalKey();
@@ -9,8 +10,10 @@ GlobalKey railTolerancePicker = GlobalKey();
 GlobalKey frequencyPicker = GlobalKey();
 GlobalKey phoneSettingsButton = GlobalKey();
 
+// Das Tutorial, damit wir es später manuell anzeigen können
 TutorialCoachMark? tutorialCoachMark;
 
+// The different points for the tutorial
 List<TargetFocus> targets = [
   TargetFocus(
     identify: "floatingActionButton",

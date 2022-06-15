@@ -42,6 +42,8 @@ class _SettingsState extends State<Settings> {
     });
   }
 
+  // Function to reset the "watchedIntro" and "offlineMode" in shared preferences, so that the user can watch
+  // the tutorial again, the next time they open the app
   void resetTutorial() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('watchedIntro', false);

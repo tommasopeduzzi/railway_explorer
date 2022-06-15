@@ -11,15 +11,16 @@ import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:background_location/background_location.dart';
-import 'package:tuple/tuple.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+
 // import nessecary files
 import 'api.dart';
 import 'settings.dart';
 import 'railway.dart';
 import 'tutorial.dart';
+import 'overpass.dart';
 
 void main() {
   runApp(const MyApp());
@@ -56,15 +57,13 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   // Initialize variables
-  List<Tuple2<LatLng, bool>>? checkedLocations = [];
-  int count = 1;
+  int count = 0;
   int saveFreq = 30;
   bool railway = false;
-  List<Railway> railways = [];
   bool offlineMode = false;
-  List<int> toBeRemoved = [];
+  List<Railway> railways = [];
 
-  // Function to get File Object for Saving
+  // Function to get File Object for Saving. We save it in a directory, where the file is visible for the user.
   Future<File?> getFile() async {
     Directory? appDocumentsDirectory = await getExternalStorageDirectory();
     if (appDocumentsDirectory == null) {
@@ -101,23 +100,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Function to check if the user is near a railway,
-  // if the user has moved more than 10m, it will check with the Overpass API
+  // Function to check if the user is near a railway, where we use the function from api.dart
   Future<bool> nearRailway(LatLng location) async {
-    LatLng roundedLocation = LatLng(
-      double.parse(location.latitude.toStringAsFixed(4)),
-      double.parse(location.longitude.toStringAsFixed(4)),
-    );
-    for (Tuple2<LatLng, bool> location in checkedLocations!) {
-      if (location.item1 == roundedLocation) {
-        return location.item2;
-      }
-    }
     List<Elements> response = await fetchElements(location);
     return response.isNotEmpty;
   }
 
-  //Function to check permissions.
+  //Function to check permissions and request them if necessary.
   void checkPermissions() async {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -132,7 +121,8 @@ class _HomePageState extends State<HomePage> {
       saveFreq = prefs.getInt('save') ?? saveFreq;
       var newOfflineMode = prefs.getBool('offlineMode') ?? offlineMode;
       if (newOfflineMode != offlineMode) {
-        railway = false;
+        railway =
+            false; // When the mode is changed, railway is always false at the beginning
         offlineMode = newOfflineMode;
       }
     });
@@ -144,6 +134,7 @@ class _HomePageState extends State<HomePage> {
     prefs.setBool('offlineMode', true);
   }
 
+  // Function to advance the tutorial and open/close different pages at different times
   void advanceTutorial(TargetFocus target) {
     if (tutorialCoachMark == null) return;
     if (target.identify == "settingsButton") {
@@ -171,8 +162,8 @@ class _HomePageState extends State<HomePage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var watchedIntro = prefs.getBool('watchedIntro') ?? false;
     if (!watchedIntro) {
-      // ignore: use_build_context_synchronously
       // can't do this differently
+      // ignore: use_build_context_synchronously
       tutorialCoachMark = TutorialCoachMark(
         context,
         targets: targets, // List<TargetFocus>
@@ -187,12 +178,11 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  @override // Initialize the app and load settings and railways
+  @override // Initialize the app, show tutorial on the first start and load settings and railways from the save file
   void initState() {
     super.initState();
     showTutorial();
     read();
-    checkedLocations ??= [];
     initPlatformState();
     loadSettings();
   }
@@ -212,8 +202,8 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // This function is called every time the user moves,
-  // it checks if the user is near a railway and updates the map
+  // This function is called every time the app receives a location update (if the user moves approximately every second),
+  // it checks if the user is near a railway and if so it adds it to the list of railways, so that it gets rendered on the map.
   void callback(Location location) async {
     if (railway) {
       setState(() {
@@ -242,12 +232,6 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     loadSettings(); // Load settings every time the app is built
     checkPermissions(); // Check permissions every time the app is built
-    setState(() {
-      for (int index in toBeRemoved) {
-        railways.removeAt(index);
-      }
-      toBeRemoved = [];
-    });
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -306,181 +290,174 @@ class _HomePageState extends State<HomePage> {
                       title: const Text("Edit railway journey"),
                       children: [
                         Container(
-                            padding: const EdgeInsets.all(10),
-                            child: StatefulBuilder(
-                              builder: (context, setState) {
-                                if (index >= railways.length) {
-                                  return const Text("No railway selected");
-                                }
-                                return Column(
-                                  children: [
-                                    TextFormField(
-                                      decoration: const InputDecoration(
-                                        labelText: "Name",
-                                      ),
-                                      minLines: 1,
-                                      maxLines: 1,
-                                      initialValue: railways[index].name,
-                                      onChanged: (value) {
-                                        setState(
-                                            () => railways[index].name = value);
-                                      },
+                          padding: const EdgeInsets.all(10),
+                          child: StatefulBuilder(
+                            builder: (context, setState) {
+                              if (index >= railways.length) {
+                                return const Text("No railway selected");
+                              }
+                              return Column(
+                                children: [
+                                  TextFormField(
+                                    decoration: const InputDecoration(
+                                      labelText: "Name",
                                     ),
-                                    TextFormField(
-                                      minLines: 3,
-                                      maxLines: 7,
-                                      initialValue: railways[index].description,
-                                      decoration: const InputDecoration(
-                                        labelText: "Description",
-                                      ),
-                                      onChanged: (value) {
-                                        setState(() => railways[index]
-                                            .description = value);
-                                      },
+                                    minLines: 1,
+                                    maxLines: 1,
+                                    initialValue: railways[index].name,
+                                    onChanged: (value) {
+                                      setState(
+                                          () => railways[index].name = value);
+                                    },
+                                  ),
+                                  TextFormField(
+                                    minLines: 3,
+                                    maxLines: 7,
+                                    initialValue: railways[index].description,
+                                    decoration: const InputDecoration(
+                                      labelText: "Description",
                                     ),
-                                    Row(
+                                    onChanged: (value) {
+                                      setState(() =>
+                                          railways[index].description = value);
+                                    },
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                          DateFormat("mm:HH dd.MM.yyyy")
+                                              .format(railways[index].dateTime),
+                                          style: const TextStyle(
+                                              color: Colors.grey)),
+                                      TextButton(
+                                        child: const Text("Select date"),
+                                        onPressed: () {
+                                          showDatePicker(
+                                            context: context,
+                                            initialDate:
+                                                railways[index].dateTime,
+                                            firstDate: railways[index]
+                                                .dateTime
+                                                .add(
+                                                    const Duration(days: -365)),
+                                            lastDate: railways[index]
+                                                .dateTime
+                                                .add(const Duration(days: 365)),
+                                          ).then((date) {
+                                            if (date != null) {
+                                              setState(() {
+                                                railways[index].dateTime = date;
+                                              });
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Text(
-                                            DateFormat("mm:HH dd.MM.yyyy")
-                                                .format(
-                                                    railways[index].dateTime),
-                                            style: const TextStyle(
-                                                color: Colors.grey)),
-                                        TextButton(
-                                          child: const Text("Select date"),
-                                          onPressed: () {
-                                            showDatePicker(
-                                              context: context,
-                                              initialDate:
-                                                  railways[index].dateTime,
-                                              firstDate: railways[index]
-                                                  .dateTime
-                                                  .add(const Duration(
-                                                      days: -365)),
-                                              lastDate: railways[index]
-                                                  .dateTime
-                                                  .add(const Duration(
-                                                      days: 365)),
-                                            ).then((date) {
-                                              if (date != null) {
-                                                setState(() {
-                                                  railways[index].dateTime =
-                                                      date;
-                                                });
-                                              }
-                                            });
-                                          },
+                                        const Text(
+                                          "Change Color",
+                                          style: TextStyle(color: Colors.grey),
                                         ),
-                                      ],
-                                    ),
-                                    Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          const Text(
-                                            "Change Color",
-                                            style:
-                                                TextStyle(color: Colors.grey),
-                                          ),
-                                          GestureDetector(
-                                            onTap: (() {
-                                              showDialog(
-                                                context: context,
-                                                builder: (context) {
-                                                  return AlertDialog(
-                                                    title: const Text(
-                                                        'Pick a colour'),
-                                                    content:
-                                                        SingleChildScrollView(
-                                                      child: ColorPicker(
-                                                        pickerColor:
-                                                            railways[index]
-                                                                .color
-                                                                .toColor(),
-                                                        onColorChanged:
-                                                            (color) {
-                                                          setState(() {
-                                                            railways[index]
-                                                                    .color =
-                                                                JsonColor
-                                                                    .fromColor(
-                                                                        color);
-                                                            avatarColor = color;
-                                                          });
-                                                        },
-                                                        pickerAreaHeightPercent:
-                                                            0.8,
-                                                      ),
+                                        GestureDetector(
+                                          onTap: (() {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) {
+                                                return AlertDialog(
+                                                  title: const Text(
+                                                      'Pick a colour'),
+                                                  content:
+                                                      SingleChildScrollView(
+                                                    child: ColorPicker(
+                                                      pickerColor:
+                                                          railways[index]
+                                                              .color
+                                                              .toColor(),
+                                                      onColorChanged: (color) {
+                                                        setState(() {
+                                                          railways[index]
+                                                                  .color =
+                                                              JsonColor
+                                                                  .fromColor(
+                                                                      color);
+                                                          avatarColor = color;
+                                                        });
+                                                      },
+                                                      pickerAreaHeightPercent:
+                                                          0.8,
                                                     ),
-                                                    actions: <Widget>[
-                                                      TextButton(
-                                                        child:
-                                                            const Text('Close'),
-                                                        onPressed: () {
-                                                          Navigator.of(context)
-                                                              .pop();
-                                                        },
-                                                      ),
-                                                    ],
-                                                  );
-                                                },
-                                              );
-                                            }),
-                                            child: CircleAvatar(
-                                              backgroundColor: avatarColor,
-                                              radius: 20,
-                                            ),
-                                          ),
-                                        ]),
-                                    TextButton(
-                                      child: const Text("Delete",
-                                          style: TextStyle(color: Colors.red)),
-                                      onPressed: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (context) {
-                                            return AlertDialog(
-                                              title: const Text(
-                                                  "Are you sure you want to delete this journey?"),
-                                              actions: [
-                                                TextButton(
-                                                  child: const Text("No"),
-                                                  onPressed: () {
-                                                    Navigator.pop(context);
-                                                  },
-                                                ),
-                                                TextButton(
-                                                  child: const Text("Yes"),
-                                                  onPressed: () {
-                                                    Navigator.pop(context);
-                                                    Navigator.pop(context);
-                                                    setState(() {
-                                                      if (index ==
-                                                          railways.length) {
-                                                        railways = [];
-                                                      } else {
-                                                        railways
-                                                            .removeAt(index);
-                                                      }
-                                                    });
-                                                  },
-                                                ),
-                                              ],
+                                                  ),
+                                                  actions: <Widget>[
+                                                    TextButton(
+                                                      child:
+                                                          const Text('Close'),
+                                                      onPressed: () {
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                      },
+                                                    ),
+                                                  ],
+                                                );
+                                              },
                                             );
-                                          },
-                                        );
-                                      },
-                                    ),
-                                    TextButton(
-                                      child: const Text("Close"),
-                                      onPressed: () => Navigator.pop(context),
-                                    )
-                                  ],
-                                );
-                              },
-                            ))
+                                          }),
+                                          child: CircleAvatar(
+                                            backgroundColor: avatarColor,
+                                            radius: 20,
+                                          ),
+                                        ),
+                                      ]),
+                                  TextButton(
+                                    child: const Text("Delete",
+                                        style: TextStyle(color: Colors.red)),
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                            title: const Text(
+                                                "Are you sure you want to delete this journey?"),
+                                            actions: [
+                                              TextButton(
+                                                child: const Text("No"),
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                },
+                                              ),
+                                              TextButton(
+                                                child: const Text("Yes"),
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                  Navigator.pop(context);
+                                                  setState(() {
+                                                    railways.removeAt(index);
+                                                    if (railway) {
+                                                      railways.add(Railway());
+                                                    }
+                                                  });
+                                                },
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                                  TextButton(
+                                    child: const Text("Close"),
+                                    onPressed: () => Navigator.pop(context),
+                                  )
+                                ],
+                              );
+                            },
+                          ),
+                        )
                       ],
                     );
                   },

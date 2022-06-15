@@ -41,8 +41,8 @@ class JsonColor {
         b = color.blue;
 }
 
-DateFormat dateFormat = DateFormat('dd-MM-yyy'); // Date format for date picker
-DateFormat timeFormat = DateFormat('HH:mm');
+DateFormat dateFormat = DateFormat('dd-MM-yyy'); // Date format for default name
+DateFormat timeFormat = DateFormat('HH:mm'); // Time format for default name
 
 @JsonSerializable()
 class Railway {
