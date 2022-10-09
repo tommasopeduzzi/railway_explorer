@@ -1,29 +1,33 @@
-// import nessecary dart core libaries
-import 'dart:convert';
-import 'dart:io';
 // import nessecary packages
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:flutter_map_tappable_polyline/flutter_map_tappable_polyline.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:background_location/background_location.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:railway_explorer/state_model.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
-
-// import nessecary files
-import 'api.dart';
+import 'package:provider/provider.dart';
+// import necessary files
 import 'settings.dart';
 import 'railway.dart';
 import 'tutorial.dart';
 import 'overpass.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => RailwaysModel()),
+        ChangeNotifierProvider(create: (context) => AppStateModel()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -56,55 +60,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Initialize variables
   int count = 0;
-  int saveFreq = 30;
-  bool railway = false;
-  bool offlineMode = false;
-  List<Railway> railways = [];
-
-  // Function to get File Object for Saving. We save it in a directory, where the file is visible for the user.
-  Future<File?> getFile() async {
-    Directory? appDocumentsDirectory = await getExternalStorageDirectory();
-    if (appDocumentsDirectory == null) {
-      return null;
-    }
-    String appDocumentsPath = appDocumentsDirectory.path;
-    String filePath = '$appDocumentsPath/save.json';
-    File file = File(filePath);
-    if (!await file.exists()) {
-      file.create();
-    }
-    return file;
-  }
-
-  // Function to save railways to file
-  void save() async {
-    File? file = await getFile();
-    if (file == null) return;
-    file.writeAsString(jsonEncode(railways));
-  }
-
-  // Function to load railways from file
-  void read() async {
-    File? file = await getFile();
-    if (file == null) return;
-    String contents = await file.readAsString();
-    if (contents != "") {
-      var decodedJson = jsonDecode(contents)
-          .map((railway) => Railway.fromJson(railway))
-          .toList();
-      setState(() {
-        railways = List<Railway>.from(decodedJson);
-      });
-    }
-  }
-
-  // Function to check if the user is near a railway, where we use the function from api.dart
-  Future<bool> nearRailway(LatLng location) async {
-    List<Elements> response = await fetchElements(location);
-    return response.isNotEmpty;
-  }
 
   //Function to check permissions and request them if necessary.
   void checkPermissions() async {
@@ -112,26 +68,6 @@ class _HomePageState extends State<HomePage> {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
-  }
-
-  // Fuction to load settings from shared preferences
-  void loadSettings() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      saveFreq = prefs.getInt('save') ?? saveFreq;
-      var newOfflineMode = prefs.getBool('offlineMode') ?? offlineMode;
-      if (newOfflineMode != offlineMode) {
-        railway =
-            false; // When the mode is changed, railway is always false at the beginning
-        offlineMode = newOfflineMode;
-      }
-    });
-  }
-
-  // Function to play tutorial
-  void enableOfflineMode() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('offlineMode', true);
   }
 
   // Function to advance the tutorial and open/close different pages at different times
@@ -144,7 +80,7 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     } else if (target.identify == "offlineModeSwitch") {
-      enableOfflineMode();
+      Provider.of<AppStateModel>(context, listen: false).setNearRailway(true);
       Navigator.pop(context);
     } else if (target.identify == "floatingActionButton2") {
       Navigator.of(context).push(
@@ -158,12 +94,10 @@ class _HomePageState extends State<HomePage> {
     tutorialCoachMark!.next();
   }
 
-  void showTutorial() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    var watchedIntro = prefs.getBool('watchedIntro') ?? false;
+  void showTutorial() {
+    var watchedIntro =
+        Provider.of<AppStateModel>(context, listen: false).watchedTutorial;
     if (!watchedIntro) {
-      // can't do this differently
-      // ignore: use_build_context_synchronously
       tutorialCoachMark = TutorialCoachMark(
         context,
         targets: targets, // List<TargetFocus>
@@ -172,7 +106,8 @@ class _HomePageState extends State<HomePage> {
           advanceTutorial(target);
         },
         onFinish: () {
-          prefs.setBool('watchedIntro', true);
+          Provider.of<AppStateModel>(context, listen: false)
+              .setWatchedTutorial(true);
         },
       )..show();
     }
@@ -182,9 +117,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     showTutorial();
-    read();
     initPlatformState();
-    loadSettings();
   }
 
   // Function to satart tracking and set up location services
@@ -202,35 +135,66 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Future<List<Elements>> fetchElements(LatLng location) async {
+    final coordStr =
+        "${location.latitude.toString()},${location.longitude.toString()}";
+    final tolerance =
+        Provider.of<AppStateModel>(context, listen: false).railTolerance;
+    try {
+      final response = await http.get(Uri.parse(
+          'https://overpass.kumi.systems/api/interpreter?data=[out:json];(node["railway"="rail"](around:$tolerance,$coordStr);way["railway"="rail"](around:$tolerance,$coordStr);node["railway"="tram"](around:$tolerance,$coordStr);way["railway"="tram"](around:$tolerance,$coordStr););out geom;'));
+      if (response.statusCode == 200 || response.statusCode == 203) {
+        // If the server did return a 200 OK response or a 203 Non-Authoritative Information response,
+        // then parse the JSON.
+        return Response.fromJson(jsonDecode(response.body)).elements!;
+      } else {
+        // If the server did not return a 200 OK response or a 203 Non-Authoritative Information response,
+        // then throw an exception.
+        throw Exception(
+          // This is a very funny error message.
+          'C\'est l\'erreur d\'api numéro ${response.statusCode}. Please visit http.cat/${response.statusCode} for further information.',
+        );
+      }
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<bool> checkIfLocationNearRailway(LatLng location) async {
+    List<Elements> response = await fetchElements(location);
+    return response.isNotEmpty;
+  }
+
   // This function is called every time the app receives a location update (if the user moves approximately every second),
   // it checks if the user is near a railway and if so it adds it to the list of railways, so that it gets rendered on the map.
   void callback(Location location) async {
-    if (railway) {
-      setState(() {
-        railways.last.points
-            .add(JsonLatLng(location.latitude!, location.longitude!));
-      });
+    var appStateProvider = Provider.of<AppStateModel>(context, listen: false);
+    var railwayStateProvider =
+        Provider.of<RailwaysModel>(context, listen: false);
+
+    if (appStateProvider.nearRailway) {
+      railwayStateProvider.addNewLocationToLastRailway(
+          JsonLatLng(location.latitude!, location.longitude!));
     }
-    if (count % 5 == 0 && !offlineMode) {
-      bool near =
-          await nearRailway(LatLng(location.latitude!, location.longitude!));
-      if (!railway && near) {
-        setState(() {
-          railways.add(Railway());
-        });
+    if (count % 5 == 0 && !appStateProvider.offlineMode) {
+      bool near = await checkIfLocationNearRailway(
+          LatLng(location.latitude!, location.longitude!));
+      if (!appStateProvider.nearRailway && near) {
+        railwayStateProvider
+            .add(Railway(JsonColor.fromColor(appStateProvider.railColour)));
       }
-      railway = near;
-      count = -1;
+      appStateProvider.setNearRailway(near);
+      count--;
     }
-    if (count % saveFreq == 0) {
-      save();
+    if (count % appStateProvider.saveFrequency == 0) {
+      railwayStateProvider.saveAsJson();
+      appStateProvider.saveAsJson();
     }
     count++;
   }
 
   @override // Build the app
   Widget build(BuildContext context) {
-    loadSettings(); // Load settings every time the app is built
     checkPermissions(); // Check permissions every time the app is built
     return Scaffold(
       appBar: AppBar(
@@ -266,223 +230,248 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           LocationMarkerLayerWidget(),
-          TappablePolylineLayerWidget(
-            options: TappablePolylineLayerOptions(
-              // Add tappable polylines using Plugin flutter map tappable polyline.
-              polylines: railways.map((railway) {
-                return TaggedPolyline(
-                  points: railway.points
-                      .map((e) => LatLng(e.lat, e.lng))
-                      .toList(), // Make polylines from the points
-                  strokeWidth: 5.0,
-                  color: railway.color.toColor(),
-                  tag: railways.indexOf(railway).toString(),
-                );
-              }).toList(),
-              onTap: (polylines, tapPosition) {
-                // When the user taps a polyline open a dialog with the railway details
-                int index = int.parse(polylines[0].tag!);
-                var avatarColor = railways[index].color.toColor();
-                showDialog(
-                  context: context,
-                  builder: (context) {
-                    return SimpleDialog(
-                      title: const Text("Edit railway journey"),
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          child: StatefulBuilder(
-                            builder: (context, setState) {
-                              if (index >= railways.length) {
-                                return const Text("No railway selected");
-                              }
-                              return Column(
-                                children: [
-                                  TextFormField(
-                                    decoration: const InputDecoration(
-                                      labelText: "Name",
-                                    ),
-                                    minLines: 1,
-                                    maxLines: 1,
-                                    initialValue: railways[index].name,
-                                    onChanged: (value) {
-                                      setState(
-                                          () => railways[index].name = value);
-                                    },
-                                  ),
-                                  TextFormField(
-                                    minLines: 3,
-                                    maxLines: 7,
-                                    initialValue: railways[index].description,
-                                    decoration: const InputDecoration(
-                                      labelText: "Description",
-                                    ),
-                                    onChanged: (value) {
-                                      setState(() =>
-                                          railways[index].description = value);
-                                    },
-                                  ),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                          DateFormat("mm:HH dd.MM.yyyy")
-                                              .format(railways[index].dateTime),
-                                          style: const TextStyle(
-                                              color: Colors.grey)),
-                                      TextButton(
-                                        child: const Text("Select date"),
-                                        onPressed: () {
-                                          showDatePicker(
-                                            context: context,
-                                            initialDate:
-                                                railways[index].dateTime,
-                                            firstDate: railways[index]
-                                                .dateTime
-                                                .add(
-                                                    const Duration(days: -365)),
-                                            lastDate: railways[index]
-                                                .dateTime
-                                                .add(const Duration(days: 365)),
-                                          ).then((date) {
-                                            if (date != null) {
-                                              setState(() {
-                                                railways[index].dateTime = date;
-                                              });
-                                            }
-                                          });
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        const Text(
-                                          "Change Color",
-                                          style: TextStyle(color: Colors.grey),
-                                        ),
-                                        GestureDetector(
-                                          onTap: (() {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) {
-                                                return AlertDialog(
-                                                  title: const Text(
-                                                      'Pick a colour'),
-                                                  content:
-                                                      SingleChildScrollView(
-                                                    child: ColorPicker(
-                                                      pickerColor:
-                                                          railways[index]
-                                                              .color
-                                                              .toColor(),
-                                                      onColorChanged: (color) {
-                                                        setState(() {
-                                                          railways[index]
-                                                                  .color =
-                                                              JsonColor
-                                                                  .fromColor(
-                                                                      color);
-                                                          avatarColor = color;
-                                                        });
-                                                      },
-                                                      pickerAreaHeightPercent:
-                                                          0.8,
-                                                    ),
-                                                  ),
-                                                  actions: <Widget>[
-                                                    TextButton(
-                                                      child:
-                                                          const Text('Close'),
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      },
-                                                    ),
-                                                  ],
-                                                );
-                                              },
-                                            );
-                                          }),
-                                          child: CircleAvatar(
-                                            backgroundColor: avatarColor,
-                                            radius: 20,
-                                          ),
-                                        ),
-                                      ]),
-                                  TextButton(
-                                    child: const Text("Delete",
-                                        style: TextStyle(color: Colors.red)),
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) {
-                                          return AlertDialog(
-                                            title: const Text(
-                                                "Are you sure you want to delete this journey?"),
-                                            actions: [
-                                              TextButton(
-                                                child: const Text("No"),
-                                                onPressed: () {
-                                                  Navigator.pop(context);
-                                                },
-                                              ),
-                                              TextButton(
-                                                child: const Text("Yes"),
-                                                onPressed: () {
-                                                  Navigator.pop(context);
-                                                  Navigator.pop(context);
-                                                  setState(() {
-                                                    railways.removeAt(index);
-                                                    if (railway) {
-                                                      railways.add(Railway());
-                                                    }
-                                                  });
-                                                },
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                                  TextButton(
-                                    child: const Text("Close"),
-                                    onPressed: () => Navigator.pop(context),
-                                  )
-                                ],
-                              );
-                            },
-                          ),
-                        )
-                      ],
+          Consumer<RailwaysModel>(
+            builder: (context, railwayModel, child) {
+              var railways = railwayModel.railways;
+              return TappablePolylineLayerWidget(
+                options: TappablePolylineLayerOptions(
+                  // Add tappable polylines using Plugin flutter map tappable polyline.
+                  polylines: railways.map((railway) {
+                    return TaggedPolyline(
+                      points: railway.points
+                          .map((e) => LatLng(e.lat, e.lng))
+                          .toList(), // Make polylines from the points
+                      strokeWidth: 5.0,
+                      color: railway.color.toColor(),
+                      tag: railways.indexOf(railway).toString(),
                     );
-                  },
-                );
-              },
-            ),
-          ),
+                  }).toList(),
+                  // onTap: (polylines, tapPosition) {
+                  //   // When the user taps a polyline open a dialog with the railway details
+                  //   int index = int.parse(polylines[0].tag!);
+                  //   var avatarColor = railways[index].color.toColor();
+                  //   showDialog(
+                  //     context: context,
+                  //     builder: (context) {
+                  //       return SimpleDialog(
+                  //         title: const Text("Edit railway journey"),
+                  //         children: [
+                  //           Container(
+                  //             padding: const EdgeInsets.all(10),
+                  //             child: StatefulBuilder(
+                  //               builder: (context, setState) {
+                  //                 if (index >= railways.length) {
+                  //                   return const Text("No railway selected");
+                  //                 }
+                  //                 return Column(
+                  //                   children: [
+                  //                     TextFormField(
+                  //                       decoration: const InputDecoration(
+                  //                         labelText: "Name",
+                  //                       ),
+                  //                       minLines: 1,
+                  //                       maxLines: 1,
+                  //                       initialValue: railways[index].name,
+                  //                       onChanged: (value) {
+                  //                         setState(() =>
+                  //                             railways[index].name = value);
+                  //                       },
+                  //                     ),
+                  //                     TextFormField(
+                  //                       minLines: 3,
+                  //                       maxLines: 7,
+                  //                       initialValue:
+                  //                           railways[index].description,
+                  //                       decoration: const InputDecoration(
+                  //                         labelText: "Description",
+                  //                       ),
+                  //                       onChanged: (value) {
+                  //                         setState(() => railways[index]
+                  //                             .description = value);
+                  //                       },
+                  //                     ),
+                  //                     Row(
+                  //                       mainAxisAlignment:
+                  //                           MainAxisAlignment.spaceBetween,
+                  //                       children: [
+                  //                         Text(
+                  //                             DateFormat("mm:HH dd.MM.yyyy")
+                  //                                 .format(
+                  //                                     railways[index].dateTime),
+                  //                             style: const TextStyle(
+                  //                                 color: Colors.grey)),
+                  //                         TextButton(
+                  //                           child: const Text("Select date"),
+                  //                           onPressed: () {
+                  //                             showDatePicker(
+                  //                               context: context,
+                  //                               initialDate:
+                  //                                   railways[index].dateTime,
+                  //                               firstDate: railways[index]
+                  //                                   .dateTime
+                  //                                   .add(const Duration(
+                  //                                       days: -365)),
+                  //                               lastDate: railways[index]
+                  //                                   .dateTime
+                  //                                   .add(const Duration(
+                  //                                       days: 365)),
+                  //                             ).then((date) {
+                  //                               if (date != null) {
+                  //                                 setState(() {
+                  //                                   railways[index].dateTime =
+                  //                                       date;
+                  //                                 });
+                  //                               }
+                  //                             });
+                  //                           },
+                  //                         ),
+                  //                       ],
+                  //                     ),
+                  //                     Row(
+                  //                         mainAxisAlignment:
+                  //                             MainAxisAlignment.spaceBetween,
+                  //                         children: [
+                  //                           const Text(
+                  //                             "Change Color",
+                  //                             style:
+                  //                                 TextStyle(color: Colors.grey),
+                  //                           ),
+                  //                           GestureDetector(
+                  //                             onTap: (() {
+                  //                               showDialog(
+                  //                                 context: context,
+                  //                                 builder: (context) {
+                  //                                   return AlertDialog(
+                  //                                     title: const Text(
+                  //                                         'Pick a colour'),
+                  //                                     content:
+                  //                                         SingleChildScrollView(
+                  //                                       child: ColorPicker(
+                  //                                         pickerColor:
+                  //                                             railways[index]
+                  //                                                 .color
+                  //                                                 .toColor(),
+                  //                                         onColorChanged:
+                  //                                             (color) {
+                  //                                           setState(() {
+                  //                                             railways[index]
+                  //                                                     .color =
+                  //                                                 JsonColor
+                  //                                                     .fromColor(
+                  //                                                         color);
+                  //                                             avatarColor =
+                  //                                                 color;
+                  //                                           });
+                  //                                         },
+                  //                                         pickerAreaHeightPercent:
+                  //                                             0.8,
+                  //                                       ),
+                  //                                     ),
+                  //                                     actions: <Widget>[
+                  //                                       TextButton(
+                  //                                         child: const Text(
+                  //                                             'Close'),
+                  //                                         onPressed: () {
+                  //                                           Navigator.of(
+                  //                                                   context)
+                  //                                               .pop();
+                  //                                         },
+                  //                                       ),
+                  //                                     ],
+                  //                                   );
+                  //                                 },
+                  //                               );
+                  //                             }),
+                  //                             child: CircleAvatar(
+                  //                               backgroundColor: avatarColor,
+                  //                               radius: 20,
+                  //                             ),
+                  //                           ),
+                  //                         ]),
+                  //                     TextButton(
+                  //                       child: const Text("Delete",
+                  //                           style:
+                  //                               TextStyle(color: Colors.red)),
+                  //                       onPressed: () {
+                  //                         showDialog(
+                  //                           context: context,
+                  //                           builder: (context) {
+                  //                             return AlertDialog(
+                  //                               title: const Text(
+                  //                                   "Are you sure you want to delete this journey?"),
+                  //                               actions: [
+                  //                                 TextButton(
+                  //                                   child: const Text("No"),
+                  //                                   onPressed: () {
+                  //                                     Navigator.pop(context);
+                  //                                   },
+                  //                                 ),
+                  //                                 TextButton(
+                  //                                   child: const Text("Yes"),
+                  //                                   onPressed: () {
+                  //                                     Navigator.pop(context);
+                  //                                     Navigator.pop(context);
+                  //                                     setState(() {
+                  //                                       railways
+                  //                                           .removeAt(index);
+                  //                                       if (railway) {
+                  //                                         railways
+                  //                                             .add(Railway());
+                  //                                       }
+                  //                                     });
+                  //                                   },
+                  //                                 ),
+                  //                               ],
+                  //                             );
+                  //                           },
+                  //                         );
+                  //                       },
+                  //                     ),
+                  //                     TextButton(
+                  //                       child: const Text("Close"),
+                  //                       onPressed: () => Navigator.pop(context),
+                  //                     )
+                  //                   ],
+                  //                 );
+                  //               },
+                  //             ),
+                  //           )
+                  //         ],
+                  //       );
+                  //     },
+                  //   );
+                  // },
+                ),
+              );
+            },
+          )
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        key: floatingActionButtonKey,
-        onPressed: () {
-          if (offlineMode) {
-            setState(() {
-              if (!railway) {
-                railways.add(Railway());
+      floatingActionButton: Consumer<AppStateModel>(
+        builder: (context, appState, child) {
+          return FloatingActionButton(
+            key: floatingActionButtonKey,
+            onPressed: () {
+              if (appState.offlineMode) {
+                setState(() {
+                  if (!appState.nearRailway) {
+                    Provider.of<RailwaysModel>(context, listen: false).add(
+                      Railway(
+                        JsonColor.fromColor(appState.railColour),
+                      ),
+                    );
+                  }
+                  appState.setNearRailway(!appState.nearRailway);
+                });
               }
-              railway = !railway;
-            });
-          }
+            },
+            tooltip: 'Add railway',
+            backgroundColor: (appState.nearRailway ? Colors.green : Colors.red),
+            child: appState.offlineMode
+                ? Icon(!appState.nearRailway ? Icons.play_arrow : Icons.stop)
+                : null,
+          );
         },
-        tooltip: 'Add railway',
-        backgroundColor: (railway ? Colors.green : Colors.red),
-        child:
-            offlineMode ? Icon(!railway ? Icons.play_arrow : Icons.stop) : null,
       ),
     );
   }

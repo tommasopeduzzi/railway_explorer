@@ -43,6 +43,7 @@ dependencies:
   intl: any
   permission_handler: any
   tutorial_coach_mark: any
+  provider: any
   flutter:
     sdk: flutter
 

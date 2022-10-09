@@ -1,6 +1,7 @@
 //Import nessecay libraries
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:railway_explorer/state_model.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -17,46 +18,6 @@ class Settings extends StatefulWidget {
 
 //Initialize variables
 class _SettingsState extends State<Settings> {
-  int frequency = 30;
-  int railTolerance = 5;
-  bool offlineMode = false;
-  Color railColour = const Color.fromARGB(255, 76, 175, 175);
-
-  //Function to store stettings to shared preferences
-  void storeSettings() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('offlineMode', offlineMode);
-    prefs.setInt('railColour', railColour.value);
-    prefs.setInt('tolerance', railTolerance);
-    prefs.setInt('save', frequency);
-  }
-
-//Function to get settings from shared preferences
-  void loadSettings() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      offlineMode = prefs.getBool('offlineMode') ?? false;
-      railColour = Color(prefs.getInt('railColour') ?? 0xFF76B5B5);
-      railTolerance = prefs.getInt('tolerance') ?? 5;
-      frequency = prefs.getInt('save') ?? 30;
-    });
-  }
-
-  // Function to reset the "watchedIntro" and "offlineMode" in shared preferences, so that the user can watch
-  // the tutorial again, the next time they open the app
-  void resetTutorial() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('watchedIntro', false);
-    await prefs.setBool('offlineMode', false);
-  }
-
-  //Call function to load settings in innitState to display current settings
-  @override
-  void initState() {
-    super.initState();
-    loadSettings();
-  }
-
 //Build the settings page
   @override
   Widget build(BuildContext context) {
@@ -66,188 +27,175 @@ class _SettingsState extends State<Settings> {
       ),
       body: Container(
         margin: const EdgeInsets.all(20),
-        child: Column(
-          //All setting rows are in this column
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              //Row for offline mode
-              const Text('Offline mode', style: TextStyle(fontSize: 20)),
-              Switch(
-                key: offlineModeSwitch,
-                value: offlineMode,
-                activeTrackColor: Colors.lightGreenAccent,
-                activeColor: Colors.green,
-                onChanged: (value) {
-                  setState(() {
-                    offlineMode = value;
-                  });
-                  storeSettings(); //Store settings when offline mode is changed
-                },
+        child: Consumer<AppStateModel>(
+          builder: (context, state, child) => Column(
+            //All setting rows are in this column
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                //Row for offline mode
+                const Text('Offline mode', style: TextStyle(fontSize: 20)),
+                Switch(
+                  key: offlineModeSwitch,
+                  value: state.offlineMode,
+                  activeTrackColor: Colors.lightGreenAccent,
+                  activeColor: Colors.green,
+                  onChanged: (value) {
+                    state.setOfflineMode(value);
+                  },
+                ),
+              ]),
+              const Divider(
+                //Divider between offline mode and rail colour
+                color: Colors.black,
               ),
-            ]),
-            const Divider(
-              //Divider between offline mode and rail colour
-              color: Colors.black,
-            ),
-            Row(
-              //Row for rail colour
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Railway colour', style: TextStyle(fontSize: 20)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    GestureDetector(
-                      key: railColourPicker,
-                      onTap: (() {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              title: const Text('Pick a colour'),
-                              content: SingleChildScrollView(
-                                child: ColorPicker(
-                                  //Color picker with Package flutter_colorpicker
-                                  pickerColor: railColour,
-                                  onColorChanged: (color) {
-                                    setState(() {
-                                      railColour = color;
-                                    });
-                                    storeSettings(); //Store settings when colour is changed
-                                  },
-                                  pickerAreaHeightPercent: 0.8,
+              Row(
+                //Row for rail colour
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Railway colour', style: TextStyle(fontSize: 20)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        key: railColourPicker,
+                        onTap: (() {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('Pick a colour'),
+                                content: SingleChildScrollView(
+                                  child: ColorPicker(
+                                    //Color picker with Package flutter_colorpicker
+                                    pickerColor: state.railColour,
+                                    onColorChanged: (colour) {
+                                      state.setRailColour(colour);
+                                    },
+                                    pickerAreaHeightPercent: 0.8,
+                                  ),
                                 ),
-                              ),
-                              actions: <Widget>[
-                                TextButton(
-                                  child: const Text('Close'),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      }),
-                      child: CircleAvatar(
-                        backgroundColor: railColour,
-                        radius: 20,
-                      ),
-                    ),
-                  ],
-                )
-              ],
-            ),
-            const Divider(
-              //Divider between rail colour and rail tolerance
-              color: Colors.black,
-            ),
-            Row(
-              //Row for rail tolerance setting
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Rail Tolerance', style: TextStyle(fontSize: 20)),
-                SizedBox(
-                  width: 150,
-                  child: Center(
-                    child: Transform.scale(
-                      scale: 0.7,
-                      child: NumberPicker(
-                        //Number picker with Package numberpicker
-                        key: railTolerancePicker,
-                        haptics: true,
-                        minValue: 0,
-                        maxValue: 5000,
-                        itemWidth: 50,
-                        step: 5,
-                        value: railTolerance,
-                        axis: Axis.horizontal,
-                        onChanged: (railTolerance) {
-                          setState(
-                            () {
-                              this.railTolerance = railTolerance;
+                                actions: <Widget>[
+                                  TextButton(
+                                    child: const Text('Close'),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ],
+                              );
                             },
                           );
-                          storeSettings(); //Store settings when rail tolerance is changed
-                        },
+                        }),
+                        child: CircleAvatar(
+                          backgroundColor: state.railColour,
+                          radius: 20,
+                        ),
                       ),
-                    ),
-                  ),
-                )
-              ],
-            ),
-            const Divider(
-              //Divider between rail tolerance and save frequency
-              color: Colors.black,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Save Frequency', style: TextStyle(fontSize: 20)),
-                SizedBox(
+                    ],
+                  )
+                ],
+              ),
+              const Divider(
+                //Divider between rail colour and rail tolerance
+                color: Colors.black,
+              ),
+              Row(
+                //Row for rail tolerance setting
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Rail Tolerance', style: TextStyle(fontSize: 20)),
+                  SizedBox(
                     width: 150,
                     child: Center(
                       child: Transform.scale(
                         scale: 0.7,
                         child: NumberPicker(
                           //Number picker with Package numberpicker
-                          key: frequencyPicker,
+                          key: railTolerancePicker,
                           haptics: true,
                           minValue: 0,
                           maxValue: 5000,
                           itemWidth: 50,
-                          step: 1,
-                          value: frequency,
+                          step: 5,
+                          value: state.railTolerance,
                           axis: Axis.horizontal,
-                          onChanged: (frequency) {
-                            setState(
-                              () {
-                                this.frequency = frequency;
-                              },
-                            );
-                            storeSettings(); //Store settings when save frequency is changed
+                          onChanged: (railTolerance) {
+                            state.setRailTolerance(railTolerance);
                           },
                         ),
                       ),
-                    ))
-              ],
-            ),
-            const Divider(
-              //Divider between save frequency and open app settings
-              color: Colors.black,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Open Settings", style: TextStyle(fontSize: 20)),
-                IconButton(
-                  key: phoneSettingsButton,
-                  icon: const Icon(Icons.settings),
-                  onPressed: () {
-                    openAppSettings(); //Open app settings when pressed
-                  },
-                ),
-              ],
-            ),
-            const Divider(
-              //Divider between save frequency and open app settings
-              color: Colors.black,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Reset Tutorial", style: TextStyle(fontSize: 20)),
-                IconButton(
-                  icon: const Icon(Icons.restore),
-                  onPressed: () {
-                    resetTutorial(); //Reset tutorial when pressed
-                  },
-                ),
-              ],
-            )
-          ],
+                    ),
+                  )
+                ],
+              ),
+              const Divider(
+                //Divider between rail tolerance and save frequency
+                color: Colors.black,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Save Frequency', style: TextStyle(fontSize: 20)),
+                  SizedBox(
+                      width: 150,
+                      child: Center(
+                        child: Transform.scale(
+                          scale: 0.7,
+                          child: NumberPicker(
+                            //Number picker with Package numberpicker
+                            key: frequencyPicker,
+                            haptics: true,
+                            minValue: 0,
+                            maxValue: 5000,
+                            itemWidth: 50,
+                            step: 1,
+                            value: state.saveFrequency,
+                            axis: Axis.horizontal,
+                            onChanged: (frequency) {
+                              state.setSaveFrequency(frequency);
+                            },
+                          ),
+                        ),
+                      ))
+                ],
+              ),
+              const Divider(
+                //Divider between save frequency and open app settings
+                color: Colors.black,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Open Settings", style: TextStyle(fontSize: 20)),
+                  IconButton(
+                    key: phoneSettingsButton,
+                    icon: const Icon(Icons.settings),
+                    onPressed: () {
+                      openAppSettings(); //Open app settings when pressed
+                    },
+                  ),
+                ],
+              ),
+              const Divider(
+                //Divider between save frequency and open app settings
+                color: Colors.black,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Reset Tutorial", style: TextStyle(fontSize: 20)),
+                  IconButton(
+                    icon: const Icon(Icons.restore),
+                    onPressed: () {
+                      state.setOfflineMode(true);
+                      state.setWatchedTutorial(false);
+                    },
+                  ),
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );
