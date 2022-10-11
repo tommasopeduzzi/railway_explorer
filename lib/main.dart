@@ -60,7 +60,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int count = 0;
+  int count = 1;
 
   //Function to check permissions and request them if necessary.
   void checkPermissions() async {
@@ -150,10 +150,7 @@ class _HomePageState extends State<HomePage> {
       } else {
         // If the server did not return a 200 OK response or a 203 Non-Authoritative Information response,
         // then throw an exception.
-        throw Exception(
-          // This is a very funny error message.
-          'C\'est l\'erreur d\'api numéro ${response.statusCode}. Please visit http.cat/${response.statusCode} for further information.',
-        );
+        throw Exception('HTTP Error ${response.statusCode}.');
       }
     } catch (e) {
       return [];
@@ -176,7 +173,7 @@ class _HomePageState extends State<HomePage> {
       railwayStateProvider.addNewLocationToLastRailway(
           JsonLatLng(location.latitude!, location.longitude!));
     }
-    if (count % 5 == 0 && !appStateProvider.offlineMode) {
+    if (count > 0 && count % 5 == 0 && !appStateProvider.offlineMode) {
       bool near = await checkIfLocationNearRailway(
           LatLng(location.latitude!, location.longitude!));
       if (!appStateProvider.nearRailway && near) {
@@ -184,13 +181,14 @@ class _HomePageState extends State<HomePage> {
             .add(Railway(JsonColor.fromColor(appStateProvider.railColour)));
       }
       appStateProvider.setNearRailway(near);
-      count--;
     }
-    if (count % appStateProvider.saveFrequency == 0) {
+    if (count >= appStateProvider.saveFrequency) {
       railwayStateProvider.saveAsJson();
       appStateProvider.saveAsJson();
+      count = 0;
+    } else {
+      count++;
     }
-    count++;
   }
 
   @override // Build the app

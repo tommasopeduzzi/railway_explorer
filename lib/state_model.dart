@@ -11,7 +11,6 @@ import 'app_state.dart';
 class JsonState extends ChangeNotifier {
   JsonState() {
     fromJsonFile();
-    saveAsJson();
   }
 
   void fromJsonFile() {}
@@ -49,17 +48,17 @@ class RailwaysModel extends JsonState {
   void fromJsonFile() async {
     String data = await _readJsonFile("save.json");
     if (data == "") return;
-    var decodedJson =
-        jsonDecode(data).map((railway) => Railway.fromJson(railway)).toList();
-    if (decodedJson.length > 0) _railways = decodedJson;
-
+    _railways = jsonDecode(data)
+        .map<Railway>((railway) => Railway.fromJson(railway))
+        .toList();
     notifyListeners();
   }
 
   @override
   void saveAsJson() {
     _getFile("save.json").then((file) {
-      file.writeAsString(jsonEncode(_railways));
+      var string = jsonEncode(_railways);
+      file.writeAsString(string);
     });
   }
 
