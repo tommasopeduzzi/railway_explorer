@@ -43,6 +43,10 @@ class RailwaysModel extends JsonState {
   List<Railway> _railways = [];
 
   UnmodifiableListView<Railway> get railways => UnmodifiableListView(_railways);
+  operator [](index) {
+    if (index < 0 || index >= _railways.length) return null;
+    return _railways[index];
+  }
 
   @override
   void fromJsonFile() async {
@@ -72,13 +76,33 @@ class RailwaysModel extends JsonState {
     notifyListeners();
   }
 
-  void remove(Railway railway) {
-    _railways.remove(railway);
+  void remove(int index) {
+    _railways.removeAt(index);
     notifyListeners();
   }
 
   void addNewLocationToLastRailway(JsonLatLng location) {
     railways.last.points.add(location);
+    notifyListeners();
+  }
+
+  void setDescription(int index, String value) {
+    _railways[index].description = value;
+    notifyListeners();
+  }
+
+  void setDate(int index, DateTime date) {
+    _railways[index].dateTime = date;
+    notifyListeners();
+  }
+
+  void setName(int index, String value) {
+    _railways[index].name = value;
+    notifyListeners();
+  }
+
+  void setColor(int index, Color color) {
+    _railways[index].color = JsonColor.fromColor(color);
     notifyListeners();
   }
 }

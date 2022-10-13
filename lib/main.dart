@@ -13,6 +13,7 @@ import 'package:railway_explorer/state_model.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:provider/provider.dart';
 // import necessary files
+import 'edit.dart';
 import 'settings.dart';
 import 'railway.dart';
 import 'tutorial.dart';
@@ -47,14 +48,13 @@ class MyApp extends StatelessWidget {
               fontSizeDelta: 2.0,
             ),
       ),
-      home: const HomePage(title: 'Railway Explorer'),
+      home: const HomePage(),
     );
   }
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key, required this.title}) : super(key: key);
-  final String title;
+  const HomePage({Key? key}) : super(key: key);
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -196,7 +196,7 @@ class _HomePageState extends State<HomePage> {
     checkPermissions(); // Check permissions every time the app is built
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: const Text('Railway Explorer'),
         actions: [
           IconButton(
             key: settingsButton,
@@ -244,201 +244,14 @@ class _HomePageState extends State<HomePage> {
                       tag: railways.indexOf(railway).toString(),
                     );
                   }).toList(),
-                  // onTap: (polylines, tapPosition) {
-                  //   // When the user taps a polyline open a dialog with the railway details
-                  //   int index = int.parse(polylines[0].tag!);
-                  //   var avatarColor = railways[index].color.toColor();
-                  //   showDialog(
-                  //     context: context,
-                  //     builder: (context) {
-                  //       return SimpleDialog(
-                  //         title: const Text("Edit railway journey"),
-                  //         children: [
-                  //           Container(
-                  //             padding: const EdgeInsets.all(10),
-                  //             child: StatefulBuilder(
-                  //               builder: (context, setState) {
-                  //                 if (index >= railways.length) {
-                  //                   return const Text("No railway selected");
-                  //                 }
-                  //                 return Column(
-                  //                   children: [
-                  //                     TextFormField(
-                  //                       decoration: const InputDecoration(
-                  //                         labelText: "Name",
-                  //                       ),
-                  //                       minLines: 1,
-                  //                       maxLines: 1,
-                  //                       initialValue: railways[index].name,
-                  //                       onChanged: (value) {
-                  //                         setState(() =>
-                  //                             railways[index].name = value);
-                  //                       },
-                  //                     ),
-                  //                     TextFormField(
-                  //                       minLines: 3,
-                  //                       maxLines: 7,
-                  //                       initialValue:
-                  //                           railways[index].description,
-                  //                       decoration: const InputDecoration(
-                  //                         labelText: "Description",
-                  //                       ),
-                  //                       onChanged: (value) {
-                  //                         setState(() => railways[index]
-                  //                             .description = value);
-                  //                       },
-                  //                     ),
-                  //                     Row(
-                  //                       mainAxisAlignment:
-                  //                           MainAxisAlignment.spaceBetween,
-                  //                       children: [
-                  //                         Text(
-                  //                             DateFormat("mm:HH dd.MM.yyyy")
-                  //                                 .format(
-                  //                                     railways[index].dateTime),
-                  //                             style: const TextStyle(
-                  //                                 color: Colors.grey)),
-                  //                         TextButton(
-                  //                           child: const Text("Select date"),
-                  //                           onPressed: () {
-                  //                             showDatePicker(
-                  //                               context: context,
-                  //                               initialDate:
-                  //                                   railways[index].dateTime,
-                  //                               firstDate: railways[index]
-                  //                                   .dateTime
-                  //                                   .add(const Duration(
-                  //                                       days: -365)),
-                  //                               lastDate: railways[index]
-                  //                                   .dateTime
-                  //                                   .add(const Duration(
-                  //                                       days: 365)),
-                  //                             ).then((date) {
-                  //                               if (date != null) {
-                  //                                 setState(() {
-                  //                                   railways[index].dateTime =
-                  //                                       date;
-                  //                                 });
-                  //                               }
-                  //                             });
-                  //                           },
-                  //                         ),
-                  //                       ],
-                  //                     ),
-                  //                     Row(
-                  //                         mainAxisAlignment:
-                  //                             MainAxisAlignment.spaceBetween,
-                  //                         children: [
-                  //                           const Text(
-                  //                             "Change Color",
-                  //                             style:
-                  //                                 TextStyle(color: Colors.grey),
-                  //                           ),
-                  //                           GestureDetector(
-                  //                             onTap: (() {
-                  //                               showDialog(
-                  //                                 context: context,
-                  //                                 builder: (context) {
-                  //                                   return AlertDialog(
-                  //                                     title: const Text(
-                  //                                         'Pick a colour'),
-                  //                                     content:
-                  //                                         SingleChildScrollView(
-                  //                                       child: ColorPicker(
-                  //                                         pickerColor:
-                  //                                             railways[index]
-                  //                                                 .color
-                  //                                                 .toColor(),
-                  //                                         onColorChanged:
-                  //                                             (color) {
-                  //                                           setState(() {
-                  //                                             railways[index]
-                  //                                                     .color =
-                  //                                                 JsonColor
-                  //                                                     .fromColor(
-                  //                                                         color);
-                  //                                             avatarColor =
-                  //                                                 color;
-                  //                                           });
-                  //                                         },
-                  //                                         pickerAreaHeightPercent:
-                  //                                             0.8,
-                  //                                       ),
-                  //                                     ),
-                  //                                     actions: <Widget>[
-                  //                                       TextButton(
-                  //                                         child: const Text(
-                  //                                             'Close'),
-                  //                                         onPressed: () {
-                  //                                           Navigator.of(
-                  //                                                   context)
-                  //                                               .pop();
-                  //                                         },
-                  //                                       ),
-                  //                                     ],
-                  //                                   );
-                  //                                 },
-                  //                               );
-                  //                             }),
-                  //                             child: CircleAvatar(
-                  //                               backgroundColor: avatarColor,
-                  //                               radius: 20,
-                  //                             ),
-                  //                           ),
-                  //                         ]),
-                  //                     TextButton(
-                  //                       child: const Text("Delete",
-                  //                           style:
-                  //                               TextStyle(color: Colors.red)),
-                  //                       onPressed: () {
-                  //                         showDialog(
-                  //                           context: context,
-                  //                           builder: (context) {
-                  //                             return AlertDialog(
-                  //                               title: const Text(
-                  //                                   "Are you sure you want to delete this journey?"),
-                  //                               actions: [
-                  //                                 TextButton(
-                  //                                   child: const Text("No"),
-                  //                                   onPressed: () {
-                  //                                     Navigator.pop(context);
-                  //                                   },
-                  //                                 ),
-                  //                                 TextButton(
-                  //                                   child: const Text("Yes"),
-                  //                                   onPressed: () {
-                  //                                     Navigator.pop(context);
-                  //                                     Navigator.pop(context);
-                  //                                     setState(() {
-                  //                                       railways
-                  //                                           .removeAt(index);
-                  //                                       if (railway) {
-                  //                                         railways
-                  //                                             .add(Railway());
-                  //                                       }
-                  //                                     });
-                  //                                   },
-                  //                                 ),
-                  //                               ],
-                  //                             );
-                  //                           },
-                  //                         );
-                  //                       },
-                  //                     ),
-                  //                     TextButton(
-                  //                       child: const Text("Close"),
-                  //                       onPressed: () => Navigator.pop(context),
-                  //                     )
-                  //                   ],
-                  //                 );
-                  //               },
-                  //             ),
-                  //           )
-                  //         ],
-                  //       );
-                  //     },
-                  //   );
-                  // },
+                  onTap: (polylines, tapPosition) {
+                    int index = int.parse(polylines[0].tag!);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => Edit(index),
+                      ),
+                    );
+                  },
                 ),
               );
             },
