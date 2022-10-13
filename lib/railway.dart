@@ -12,12 +12,10 @@ class JsonLatLng {
 
   JsonLatLng(this.lat, this.lng);
 
-  factory JsonLatLng.fromJson(
-          Map<String, dynamic> json) => // Deserialize from JSON
+  factory JsonLatLng.fromJson(Map<String, dynamic> json) => // Deserialize from JSON
       _$JsonLatLngFromJson(json);
 
-  Map<String, dynamic> toJson() =>
-      _$JsonLatLngToJson(this); // Serialize to JSON
+  Map<String, dynamic> toJson() => _$JsonLatLngToJson(this); // Serialize to JSON
 }
 
 @JsonSerializable()
@@ -26,8 +24,7 @@ class JsonColor {
   int r, g, b;
   JsonColor(this.r, this.g, this.b);
 
-  factory JsonColor.fromJson(
-          Map<String, dynamic> json) => // Deserialize from JSON
+  factory JsonColor.fromJson(Map<String, dynamic> json) => // Deserialize from JSON
       _$JsonColorFromJson(json);
 
   Map<String, dynamic> toJson() => _$JsonColorToJson(this); // Serialize to JSON
@@ -55,13 +52,11 @@ class Railway {
 
   Railway(this.color) {
     // Constructor
-    name =
-        "Railway journey on the ${dateFormat.format(DateTime.now())} at ${timeFormat.format(DateTime.now())}";
+    name = "Railway journey on the ${dateFormat.format(DateTime.now())} at ${timeFormat.format(DateTime.now())}";
     dateTime = DateTime.now();
   }
 
-  factory Railway.fromJson(Map<String, dynamic> json) =>
-      _$RailwayFromJson(json);
+  factory Railway.fromJson(Map<String, dynamic> json) => _$RailwayFromJson(json);
 
   Map<String, dynamic> toJson() => _$RailwayToJson(this);
 }

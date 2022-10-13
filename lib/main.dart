@@ -60,6 +60,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int count = 1;
+  final MapController _mapController = MapController();
 
   //Function to check permissions and request them if necessary.
   void checkPermissions() async {
@@ -206,6 +207,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: FlutterMap(
+        mapController: _mapController,
         // Add a map using Plugin Flutter Map
         options: MapOptions(
           plugins: [
@@ -232,9 +234,22 @@ class _HomePageState extends State<HomePage> {
                 options: TappablePolylineLayerOptions(
                   // Add tappable polylines using Plugin flutter map tappable polyline.
                   polylines: railways.map((railway) {
+                    List<LatLng> polyline = [];
+                    for (int i = 0; i < railway.points.length; i++) {
+                      var point = LatLng(railway.points[i].lat, railway.points[i].lng);
+                      if (polyline.isEmpty || i == railway.points.length - 1) {
+                        polyline.add(point); // always add first and last point
+                        continue;
+                      }
+                      var distance = Geolocator.distanceBetween(
+                          polyline.last.latitude, polyline.last.longitude, point.latitude, point.longitude);
+                      // FIXME: Don't choose an arbitrary number (500m in this case) and update the lines whenever the zoom level changes
+                      if (distance > 500 / _mapController.zoom) {
+                        polyline.add(point);
+                      }
+                    }
                     return TaggedPolyline(
-                      points:
-                          railway.points.map((e) => LatLng(e.lat, e.lng)).toList(), // Make polylines from the points
+                      points: polyline, // Make polylines from the points
                       strokeWidth: 5.0,
                       color: railway.color.toColor(),
                       tag: railways.indexOf(railway).toString(),
