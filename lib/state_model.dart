@@ -52,9 +52,7 @@ class RailwaysModel extends JsonState {
   void fromJsonFile() async {
     String data = await _readJsonFile("save.json");
     if (data == "") return;
-    _railways = jsonDecode(data)
-        .map<Railway>((railway) => Railway.fromJson(railway))
-        .toList();
+    _railways = jsonDecode(data).map<Railway>((railway) => Railway.fromJson(railway)).toList();
     notifyListeners();
   }
 

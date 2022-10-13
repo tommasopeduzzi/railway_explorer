@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:railway_explorer/main.dart';
 import 'package:railway_explorer/railway.dart';
 import 'package:railway_explorer/state_model.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -26,7 +25,7 @@ class _EditState extends State<Edit> {
         builder: (context, railways, child) {
           if (railways[widget.index] == null) {
             return Column(
-              children: [],
+              children: const [],
             );
           }
           return Container(

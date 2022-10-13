@@ -41,8 +41,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Railway Explorer',
       theme: ThemeData(
-        primarySwatch:
-            Colors.grey, // Set the default colour of the app and text Styles
+        primarySwatch: Colors.grey, // Set the default colour of the app and text Styles
         textTheme: Theme.of(context).textTheme.apply(
               fontSizeFactor: 1.1,
               fontSizeDelta: 2.0,
@@ -95,21 +94,19 @@ class _HomePageState extends State<HomePage> {
   }
 
   void showTutorial() {
-    var watchedIntro =
-        Provider.of<AppStateModel>(context, listen: false).watchedTutorial;
+    var watchedIntro = Provider.of<AppStateModel>(context, listen: false).watchedTutorial;
     if (!watchedIntro) {
-      tutorialCoachMark = TutorialCoachMark(
-        context,
-        targets: targets, // List<TargetFocus>
-        colorShadow: Colors.grey, // DEFAULT Colors.black
-        onClickTarget: (target) {
-          advanceTutorial(target);
-        },
-        onFinish: () {
-          Provider.of<AppStateModel>(context, listen: false)
-              .setWatchedTutorial(true);
-        },
-      )..show();
+      tutorialCoachMark = TutorialCoachMark(context,
+          targets: targets, // List<TargetFocus>
+          colorShadow: Colors.grey, // DEFAULT Colors.black
+          onClickTarget: (target) {
+        advanceTutorial(target);
+      }, onFinish: () {
+        Provider.of<AppStateModel>(context, listen: false).setWatchedTutorial(true);
+      }, onSkip: () {
+        Provider.of<AppStateModel>(context, listen: false).setWatchedTutorial(true);
+      })
+        ..show();
     }
   }
 
@@ -125,8 +122,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> initPlatformState() async {
     await BackgroundLocation.setAndroidNotification(
       title: 'Railway Explorer',
-      message:
-          'Getting background location to update your personal railway map!',
+      message: 'Getting background location to update your personal railway map!',
     );
     await BackgroundLocation.setAndroidConfiguration(1000);
     await BackgroundLocation.startLocationService();
@@ -136,10 +132,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<List<Elements>> fetchElements(LatLng location) async {
-    final coordStr =
-        "${location.latitude.toString()},${location.longitude.toString()}";
-    final tolerance =
-        Provider.of<AppStateModel>(context, listen: false).railTolerance;
+    final coordStr = "${location.latitude.toString()},${location.longitude.toString()}";
+    final tolerance = Provider.of<AppStateModel>(context, listen: false).railTolerance;
     try {
       final response = await http.get(Uri.parse(
           'https://overpass.kumi.systems/api/interpreter?data=[out:json];(node["railway"="rail"](around:$tolerance,$coordStr);way["railway"="rail"](around:$tolerance,$coordStr);node["railway"="tram"](around:$tolerance,$coordStr);way["railway"="tram"](around:$tolerance,$coordStr););out geom;'));
@@ -166,19 +160,15 @@ class _HomePageState extends State<HomePage> {
   // it checks if the user is near a railway and if so it adds it to the list of railways, so that it gets rendered on the map.
   void callback(Location location) async {
     var appStateProvider = Provider.of<AppStateModel>(context, listen: false);
-    var railwayStateProvider =
-        Provider.of<RailwaysModel>(context, listen: false);
+    var railwayStateProvider = Provider.of<RailwaysModel>(context, listen: false);
 
     if (appStateProvider.nearRailway) {
-      railwayStateProvider.addNewLocationToLastRailway(
-          JsonLatLng(location.latitude!, location.longitude!));
+      railwayStateProvider.addNewLocationToLastRailway(JsonLatLng(location.latitude!, location.longitude!));
     }
     if (count > 0 && count % 5 == 0 && !appStateProvider.offlineMode) {
-      bool near = await checkIfLocationNearRailway(
-          LatLng(location.latitude!, location.longitude!));
+      bool near = await checkIfLocationNearRailway(LatLng(location.latitude!, location.longitude!));
       if (!appStateProvider.nearRailway && near) {
-        railwayStateProvider
-            .add(Railway(JsonColor.fromColor(appStateProvider.railColour)));
+        railwayStateProvider.add(Railway(JsonColor.fromColor(appStateProvider.railColour)));
       }
       appStateProvider.setNearRailway(near);
     }
@@ -199,13 +189,20 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Railway Explorer'),
         actions: [
           IconButton(
+            key: saveButton,
+            icon: const Icon(Icons.save),
+            onPressed: () {
+              Provider.of<RailwaysModel>(context, listen: false).saveAsJson();
+              Provider.of<AppStateModel>(context, listen: false).saveAsJson();
+            },
+          ),
+          IconButton(
             key: settingsButton,
             icon: const Icon(Icons.settings),
             onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const Settings()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const Settings()));
             },
-          ),
+          )
         ],
       ),
       body: FlutterMap(
@@ -236,9 +233,8 @@ class _HomePageState extends State<HomePage> {
                   // Add tappable polylines using Plugin flutter map tappable polyline.
                   polylines: railways.map((railway) {
                     return TaggedPolyline(
-                      points: railway.points
-                          .map((e) => LatLng(e.lat, e.lng))
-                          .toList(), // Make polylines from the points
+                      points:
+                          railway.points.map((e) => LatLng(e.lat, e.lng)).toList(), // Make polylines from the points
                       strokeWidth: 5.0,
                       color: railway.color.toColor(),
                       tag: railways.indexOf(railway).toString(),
@@ -278,9 +274,7 @@ class _HomePageState extends State<HomePage> {
             },
             tooltip: 'Add railway',
             backgroundColor: (appState.nearRailway ? Colors.green : Colors.red),
-            child: appState.offlineMode
-                ? Icon(!appState.nearRailway ? Icons.play_arrow : Icons.stop)
-                : null,
+            child: appState.offlineMode ? Icon(!appState.nearRailway ? Icons.play_arrow : Icons.stop) : null,
           );
         },
       ),

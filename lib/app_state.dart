@@ -12,13 +12,11 @@ class AppState {
   bool watchedTutorial = false;
   bool nearRailway = false;
   int railTolerance = 5;
-  JsonColor railColour =
-      JsonColor.fromColor(const Color.fromARGB(255, 76, 175, 175));
+  JsonColor railColour = JsonColor.fromColor(const Color.fromARGB(255, 76, 175, 175));
 
   AppState();
 
-  factory AppState.fromJson(Map<String, dynamic> json) =>
-      _$AppStateFromJson(json);
+  factory AppState.fromJson(Map<String, dynamic> json) => _$AppStateFromJson(json);
 
   Map<String, dynamic> toJson() => _$AppStateToJson(this);
 }

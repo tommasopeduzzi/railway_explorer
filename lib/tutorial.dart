@@ -4,6 +4,7 @@ import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 // The keys for the elements, so that they can be referenced later in the tutorial.
 GlobalKey floatingActionButtonKey = GlobalKey();
 GlobalKey settingsButton = GlobalKey();
+GlobalKey saveButton = GlobalKey();
 GlobalKey offlineModeSwitch = GlobalKey();
 GlobalKey railColourPicker = GlobalKey();
 GlobalKey railTolerancePicker = GlobalKey();
