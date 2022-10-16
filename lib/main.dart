@@ -1,4 +1,5 @@
 // import nessecary packages
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -61,6 +62,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int count = 1;
   final MapController _mapController = MapController();
+  bool setCenter = false;
 
   //Function to check permissions and request them if necessary.
   void checkPermissions() async {
@@ -130,14 +132,25 @@ class _HomePageState extends State<HomePage> {
     BackgroundLocation.getLocationUpdates((location) {
       callback(location);
     });
+
+    LocationSettings locationSettings = const LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 100,
+    );
+
+    Position position = await Geolocator.getCurrentPosition();
+    _mapController.move(LatLng(position.latitude, position.longitude), _mapController.zoom);
   }
 
   Future<List<Elements>> fetchElements(LatLng location) async {
     final coordStr = "${location.latitude.toString()},${location.longitude.toString()}";
     final tolerance = Provider.of<AppStateModel>(context, listen: false).railTolerance;
     try {
-      final response = await http.get(Uri.parse(
-          'https://overpass.kumi.systems/api/interpreter?data=[out:json];(node["railway"="rail"](around:$tolerance,$coordStr);way["railway"="rail"](around:$tolerance,$coordStr);node["railway"="tram"](around:$tolerance,$coordStr);way["railway"="tram"](around:$tolerance,$coordStr););out geom;'));
+      final response = await http.get(
+        Uri.parse(
+          'https://overpass.kumi.systems/api/interpreter?data=[out:json];(node["railway"="rail"](around:$tolerance,$coordStr);way["railway"="rail"](around:$tolerance,$coordStr);node["railway"="tram"](around:$tolerance,$coordStr);way["railway"="tram"](around:$tolerance,$coordStr););out geom;',
+        ),
+      );
       if (response.statusCode == 200 || response.statusCode == 203) {
         // If the server did return a 200 OK response or a 203 Non-Authoritative Information response,
         // then parse the JSON.
